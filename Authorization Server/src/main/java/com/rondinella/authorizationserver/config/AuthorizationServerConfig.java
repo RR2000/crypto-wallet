@@ -1,10 +1,6 @@
 package com.rondinella.authorizationserver.config;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
+import com.rondinella.authorizationserver.service.OidcUserInfoService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -20,8 +16,6 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -31,19 +25,12 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
-import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.time.Duration;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -58,8 +45,7 @@ public class AuthorizationServerConfig {
 
   @Bean
   @Order(Ordered.HIGHEST_PRECEDENCE)
-  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
-      throws Exception {
+  public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
     OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
         new OAuth2AuthorizationServerConfigurer();
     RequestMatcher endpointsMatcher = authorizationServerConfigurer
@@ -69,7 +55,7 @@ public class AuthorizationServerConfig {
       OidcUserInfoAuthenticationToken authentication = context.getAuthentication();
       JwtAuthenticationToken principal = (JwtAuthenticationToken) authentication.getPrincipal();
 
-      return new OidcUserInfo(principal.getToken().getClaims());
+      return OidcUserInfoService.loadUser(principal.getName(), context.getAccessToken().getScopes());
     };
 
     authorizationServerConfigurer
@@ -120,6 +106,8 @@ public class AuthorizationServerConfig {
         .redirectUri("http://127.0.0.1:80/login/oauth2/code/messaging-client-oidc")
         .scope(OidcScopes.OPENID)
         .scope(OidcScopes.PROFILE)
+        .scope(OidcScopes.PHONE)
+        .scope("wallets.private_keys")
         .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
         .build();
 
@@ -136,7 +124,6 @@ public class AuthorizationServerConfig {
 
     return new InMemoryUserDetailsManager(userDetails);
   }
-
 
 
 }

@@ -6,6 +6,8 @@
 </head>
 <body>
 <span th:text="${name} + '\'s wallets'"></span>
+<span th:text="${infophone} + ' with info'"></span>
+<span th:text="${phone} + ' no info '"></span>
 <table>
     <tr th:each="wallet : ${wallets}">
         <td th:text="${wallet}"></td>

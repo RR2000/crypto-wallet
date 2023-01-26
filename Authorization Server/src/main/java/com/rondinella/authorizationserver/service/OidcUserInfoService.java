@@ -1,68 +1,61 @@
 package com.rondinella.authorizationserver.service;
 
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 
 @Service
 public class OidcUserInfoService {
 
-  private final UserInfoRepository userInfoRepository = new UserInfoRepository();
+  private final static UserInfoRepository userInfoRepository = new UserInfoRepository();
 
-  public OidcUserInfo loadUser(String username) {
-    return new OidcUserInfo(this.userInfoRepository.findByUsername(username));
+  public static OidcUserInfo loadUser(String username, Set<String> scopes) {
+    return userInfoRepository.findByUsername(username, scopes);
   }
 
   static class UserInfoRepository {
-
-    private final Map<String, Map<String, Object>> userInfo = new HashMap<>();
-
-    public UserInfoRepository() {
-      this.userInfo.put("user1", createUser("user1"));
-      this.userInfo.put("user2", createUser("user2"));
-
-      this.userInfo.put("u", createUser("u"));
-    }
-
-    public Map<String, Object> findByUsername(String username) {
-      return this.userInfo.get(username);
-    }
-
-    private static Map<String, Object> createUser(String username) {
-      ArrayList<String> walletsTest = new ArrayList<>();
-
-      walletsTest.add("0x0000000000000000000");
-      walletsTest.add("0x00000005634f240000");
-      walletsTest.add("0x0000000003242fds000");
-
-      return OidcUserInfo.builder()
-          .subject(username)
-          .name("First Last")
-          .givenName("Raoul")
-          .familyName("Rondinella")
-          .middleName("Middle")
-          .nickname("User")
-          .preferredUsername(username)
-          .profile("https://example.com/" + username)
-          .picture("https://example.com/" + username + ".jpg")
-          .website("https://example.com")
-          .email(username + "@example.com")
-          .emailVerified(true)
-          .gender("female")
-          .birthdate("1970-01-01")
-          .zoneinfo("Europe/Paris")
-          .locale("en-US")
-          .phoneNumber("+1 (604) 555-1234;ext=5678")
-          .phoneNumberVerified(false)
-          .claim("address", Collections.singletonMap("formatted", "Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"))
-          .updatedAt("1970-01-01T00:00:00Z")
-          .claim("wallets", walletsTest)
-          .build()
-          .getClaims();
+    public OidcUserInfo findByUsername(String name, Set<String> scopes) {
+      OidcUserInfo.Builder builder = OidcUserInfo.builder().subject(name);
+      if (!scopes.isEmpty()) {
+        if (scopes.contains(OidcScopes.PROFILE)) {
+          builder.name("First Last")
+              .givenName("First")
+              .familyName("Last")
+              .middleName("Middle")
+              .nickname("User")
+              .preferredUsername(name)
+              .profile("http://127.0.0.1:8080/" + name)
+              .picture("http://127.0.0.1:8080/" + name + ".jpg")
+              .website("http://127.0.0.1:8080/")
+              .gender("female")
+              .birthdate("2022-05-24")
+              .zoneinfo("China/Beijing")
+              .locale("zh-cn")
+              .updatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        }
+        if (scopes.contains(OidcScopes.EMAIL)) {
+          builder.email(name + "@163.com").emailVerified(false);
+        }
+        if (scopes.contains(OidcScopes.ADDRESS)) {
+          builder.address("Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance");
+        }
+        if (scopes.contains(OidcScopes.PHONE)) {
+          builder.phoneNumber("13728903134").phoneNumberVerified(false);
+        }
+        if (scopes.contains("wallets.private_keys")){
+          ArrayList<String> privateKeys = new ArrayList<>();
+          privateKeys.add("bshjdlvba4uytbvy7aw48vtawytov74woa4vtba");
+          privateKeys.add("dasdfsgbye5yw5ey54y4w5by");
+          privateKeys.add("tvw3twe4vt54uwv64j65wuw5v5uv56v");
+          builder.claim("private_keys", privateKeys);
+        }
+      }
+      return builder.build();
     }
   }
 
