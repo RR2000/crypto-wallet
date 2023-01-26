@@ -1,4 +1,4 @@
-package com.rondinella.clientoauth.controller;
+package com.rondinella.clientoauth.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

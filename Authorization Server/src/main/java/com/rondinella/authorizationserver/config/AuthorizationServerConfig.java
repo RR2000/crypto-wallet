@@ -66,6 +66,7 @@ public class AuthorizationServerConfig {
     return http.build();
   }
 
+
   @Bean
   public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
       throws Exception {
@@ -91,20 +92,22 @@ public class AuthorizationServerConfig {
     return new InMemoryUserDetailsManager(userDetails);
   }
 
-  /**
-   * cercare di capire perchè non viene richiamato
-   * penso sia perchè deve esserci uno spring client
-   * @return
-   */
   @Bean
   public RegisteredClientRepository registeredClientRepository() {
     RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-        .clientId("client-a")
+        .clientId("crypto-client")
         .clientSecret("{noop}secret")
         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+        .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+        .redirectUri("http://127.0.0.1:80/login/oauth2/code/messaging-client-oidc")
         .redirectUri("http://127.0.0.1:80/authorized")
-        .scope("scope-a")
+        .scope("message.read")
+        .scope("message.write")
+        .scope("message.delete")
+        .scope(OidcScopes.OPENID)
+        .scope(OidcScopes.PROFILE)
         .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
         .build();
 

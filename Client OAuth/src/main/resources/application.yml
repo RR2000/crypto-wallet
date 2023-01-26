@@ -10,13 +10,22 @@ spring:
     oauth2:
       client:
         registration:
-          client-a:
+          messaging-client-oidc:
             provider: spring
-            client-id: client-a
+            client-id: crypto-client
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://127.0.0.1:80/authorized"
-            scope: scope-a
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid, profile
+            client-name: messaging-client-oidc
+          messaging-client-authorization-code:
+            provider: spring
+            client-id: crypto-client
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/authorized"
+            scope: message.read,message.write,message.delete
+            client-name: messaging-client-authorization-code
         provider:
           spring:
-            issuer-uri: "http://127.0.0.1:9000"
+            issuer-uri: "http://localhost:9000"
