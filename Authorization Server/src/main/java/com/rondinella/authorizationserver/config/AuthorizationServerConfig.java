@@ -42,8 +42,13 @@ import java.time.Duration;
 import java.util.UUID;
 
 @EnableWebSecurity
-@Configuration(proxyBeanMethods = false)
+@Configuration
 public class AuthorizationServerConfig {
+
+  @Bean
+  public AuthorizationServerSettings authorizationServerSettings() {
+    return AuthorizationServerSettings.builder().build();
+  }
 
   @Bean
   @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -82,17 +87,6 @@ public class AuthorizationServerConfig {
   }
 
   @Bean
-  public UserDetailsService userDetailsService() {
-    UserDetails userDetails = User.withDefaultPasswordEncoder()
-        .username("u")
-        .password("p")
-        .roles("USER")
-        .build();
-
-    return new InMemoryUserDetailsManager(userDetails);
-  }
-
-  @Bean
   public RegisteredClientRepository registeredClientRepository() {
     RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
         .clientId("crypto-client")
@@ -111,37 +105,16 @@ public class AuthorizationServerConfig {
   }
 
   @Bean
-  public JWKSource<SecurityContext> jwkSource() {
-    KeyPair keyPair = generateRsaKey();
-    RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-    RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-    RSAKey rsaKey = new RSAKey.Builder(publicKey)
-        .privateKey(privateKey)
-        .keyID(UUID.randomUUID().toString())
+  public UserDetailsService userDetailsService() {
+    UserDetails userDetails = User.withDefaultPasswordEncoder()
+        .username("u")
+        .password("p")
+        .roles("USER")
         .build();
-    JWKSet jwkSet = new JWKSet(rsaKey);
-    return new ImmutableJWKSet<>(jwkSet);
+
+    return new InMemoryUserDetailsManager(userDetails);
   }
 
-  private static KeyPair generateRsaKey() {
-    KeyPair keyPair;
-    try {
-      KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-      keyPairGenerator.initialize(2048);
-      keyPair = keyPairGenerator.generateKeyPair();
-    } catch (Exception ex) {
-      throw new IllegalStateException(ex);
-    }
-    return keyPair;
-  }
 
-  @Bean
-  public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-    return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-  }
 
-  @Bean
-  public AuthorizationServerSettings authorizationServerSettings() {
-    return AuthorizationServerSettings.builder().build();
-  }
 }
