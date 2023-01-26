@@ -17,7 +17,7 @@ public class  DefaultController {
 
   @GetMapping("/index")
   public String index(@AuthenticationPrincipal OidcUser principal) {
-    System.out.println("my_user: " + principal.getUserInfo().getFullName());
+    System.out.println("my_user: " + principal.getUserInfo().getClaims());
     return "index";
   }
 }
