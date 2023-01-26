@@ -3,6 +3,7 @@ package com.rondinella.authorizationserver.service;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ public class OidcUserInfoService {
     public UserInfoRepository() {
       this.userInfo.put("user1", createUser("user1"));
       this.userInfo.put("user2", createUser("user2"));
+
       this.userInfo.put("u", createUser("u"));
     }
 
@@ -31,11 +33,17 @@ public class OidcUserInfoService {
     }
 
     private static Map<String, Object> createUser(String username) {
+      ArrayList<String> walletsTest = new ArrayList<>();
+
+      walletsTest.add("0x0000000000000000000");
+      walletsTest.add("0x00000005634f240000");
+      walletsTest.add("0x0000000003242fds000");
+
       return OidcUserInfo.builder()
           .subject(username)
           .name("First Last")
-          .givenName("First")
-          .familyName("Last")
+          .givenName("Raoul")
+          .familyName("Rondinella")
           .middleName("Middle")
           .nickname("User")
           .preferredUsername(username)
@@ -52,6 +60,7 @@ public class OidcUserInfoService {
           .phoneNumberVerified(false)
           .claim("address", Collections.singletonMap("formatted", "Champ de Mars\n5 Av. Anatole France\n75007 Paris\nFrance"))
           .updatedAt("1970-01-01T00:00:00Z")
+          .claim("wallets", walletsTest)
           .build()
           .getClaims();
     }
