@@ -20,6 +20,7 @@ public class OidcUserInfoService {
 
   static class UserInfoRepository {
     public OidcUserInfo findByUsername(String name, Set<String> scopes) {
+
       OidcUserInfo.Builder builder = OidcUserInfo.builder().subject(name);
       if (!scopes.isEmpty()) {
         if (scopes.contains(OidcScopes.PROFILE)) {
@@ -55,6 +56,7 @@ public class OidcUserInfoService {
           builder.claim("private_keys", privateKeys);
         }
       }
+
       return builder.build();
     }
   }
