@@ -1,8 +1,6 @@
 package com.rondinella.authorizationserver.config;
 
-import com.rondinella.authorizationserver.usermanaging.CryptoUserDatabase;
 import com.rondinella.authorizationserver.usermanaging.CryptoUserDetailsService;
-import com.rondinella.authorizationserver.usermanaging.CryptoUserOidc;
 import com.rondinella.authorizationserver.usermanaging.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +10,9 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -25,6 +26,7 @@ import org.springframework.security.oauth2.server.authorization.oidc.authenticat
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -114,37 +116,17 @@ public class AuthorizationServerConfig {
     return new InMemoryRegisteredClientRepository(registeredClient);
   }
 
-/*
-  @Bean
-  UserDetailsManager users(DataSource dataSource) {
-    UserDetails user = DataBaseUser.builder()
-        .username("user")
-        .password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
-        .roles("USER")
-        .build();
-    UserDetails admin = DataBaseUser.builder()
-        .username("admin")
-        .password("{bcrypt}$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.0FxO/BTk76klW")
-        .roles("USER", "ADMIN")
-        .build();
-    JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
-    InMemoryUserDetailsManager
-    //users.createUser(user);
-    //users.createUser(admin);
-    return users;
-  }
-   */
-
-
   /*
   @Bean
-  public DataSource getDataSource() {
-    DataSourceBuilder<?> dataSourceBuilder = DataSourceBuilder.create();
-    dataSourceBuilder.driverClassName("com.mysql.cj.jdbc.Driver");
-    dataSourceBuilder.url("jdbc:mysql://127.0.0.1:8889/oauth2");
-    dataSourceBuilder.username("root");
-    dataSourceBuilder.password("root");
-    return dataSourceBuilder.build();
-  }*/
+  public UserDetailsService userDetailsService() {
+    UserDetails userDetails = User.withDefaultPasswordEncoder()
+        .username("admin")
+        .password("admin")
+        .roles("ADMIN")
+        .build();
+
+    return new InMemoryUserDetailsManager(userDetails);
+  }
+   */
 
 }

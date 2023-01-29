@@ -33,4 +33,10 @@ public class CryptoUserDetailsService implements UserDetailsService {
     };
     return new CryptoUserOidc(cryptoUserDatabase, scopes);
   }
+
+  public void addCryptoUser(CryptoUserDatabase user){
+    userRepository.save(user);
+  }
+
+
 }
