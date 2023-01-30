@@ -20,4 +20,5 @@ public class  DefaultController {
     model.addAttribute("wallets", principal.getUserInfo().getClaim("private_keys"));
     return "index";
   }
+
 }
