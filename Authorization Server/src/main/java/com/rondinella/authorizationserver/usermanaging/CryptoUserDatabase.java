@@ -9,23 +9,26 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
 public class CryptoUserDatabase {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE)
-  private Long id;
-
   @Column(nullable = false)
   private String username;
 
   @Column(nullable = false)
   private String password;
+
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "authorities")
+  private List<String> grantedAuthorities = new ArrayList<>();
+
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "wallets")
+  private List<String> wallets = new ArrayList<>();
 
   @Column
   private String firstName;
@@ -46,38 +49,21 @@ public class CryptoUserDatabase {
   private String email;
 
   @Column(nullable = false)
-  private boolean isAccountExpired;
+  private boolean isAccountExpired = false;
 
   @Column(nullable = false)
-  private boolean isAccountLocked;
+  private boolean isAccountLocked = false;
 
   @Column(nullable = false)
-  private boolean isCredentialsExpired;
+  private boolean isCredentialsExpired = false;
 
   @Column(nullable = false)
-  private boolean isEnabled;
-
-  @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "authorities")
-  @Column(nullable = false)
-  private List<String> stringAuthorities = new ArrayList<>();
-
-  @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "wallets")
-  private List<String> wallets = new ArrayList<>();
-
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
+  private boolean isEnabled = true;
 
   public Collection<? extends GrantedAuthority> getAuthorities() {
     List<GrantedAuthority> authorities = new ArrayList<>();
 
-    for (String role : stringAuthorities) {
+    for (String role : grantedAuthorities) {
       Assert.isTrue(!role.startsWith("ROLE_"), () -> {
         return role + " cannot start with ROLE_ (it is automatically added)";
       });
@@ -87,19 +73,30 @@ public class CryptoUserDatabase {
     return authorities;
   }
 
-  public void addAuthority(String authority) {
-    if(this.stringAuthorities == null)
-      this.stringAuthorities = new ArrayList<>();
-
-    this.stringAuthorities.add(authority);
+  public void addAuthority(String stringAuthority){
+    ArrayList<String> auth = new ArrayList<>();
+    auth.add(stringAuthority);
+    addAuthorities(auth);
   }
 
-  public void setAuthorities(List<String> stringAuthorities) {
-    this.stringAuthorities = stringAuthorities;
+  public void addAuthorities(List<String> stringAuthorities) {
+    if(this.grantedAuthorities == null)
+      this.grantedAuthorities = new ArrayList<>();
+
+    this.grantedAuthorities.addAll(stringAuthorities);
   }
 
   public void addWallet(String wallet){
-    this.wallets.add(wallet);
+    ArrayList<String> wal = new ArrayList<>();
+    wal.add(wallet);
+    addWallets(wal);
+  }
+
+  public void addWallets(List<String> wallets){
+    if(this.wallets == null)
+      this.wallets = new ArrayList<>();
+
+    this.wallets.addAll(wallets);
   }
 
   public void setWallets(List<String> wallets) {
@@ -207,7 +204,6 @@ public class CryptoUserDatabase {
   }
 
   public static class CryptoUserDatabaseBuilder {
-    private Long id;
     private String username;
     private String password;
     private String firstName;
@@ -222,11 +218,6 @@ public class CryptoUserDatabase {
     private boolean isEnabled;
     private List<String> stringAuthorities;
     private List<String> wallets;
-
-    public CryptoUserDatabaseBuilder setId(Long id) {
-      this.id = id;
-      return this;
-    }
 
     public CryptoUserDatabaseBuilder setUsername(String username) {
       this.username = username;
@@ -300,7 +291,6 @@ public class CryptoUserDatabase {
 
     public CryptoUserDatabase build() {
       CryptoUserDatabase cryptoUserDatabase = new CryptoUserDatabase();
-      cryptoUserDatabase.setId(id);
       cryptoUserDatabase.setUsername(username);
       cryptoUserDatabase.setPassword(password);
       cryptoUserDatabase.setFirstName(firstName);
@@ -313,7 +303,7 @@ public class CryptoUserDatabase {
       cryptoUserDatabase.setIsAccountExpired(isAccountExpired);
       cryptoUserDatabase.setIsAccountLocked(isAccountLocked);
       cryptoUserDatabase.setIsCredentialsExpired(isCredentialsExpired);
-      cryptoUserDatabase.setAuthorities(stringAuthorities);
+      cryptoUserDatabase.addAuthorities(stringAuthorities);
       cryptoUserDatabase.setWallets(wallets);
 
       return cryptoUserDatabase;

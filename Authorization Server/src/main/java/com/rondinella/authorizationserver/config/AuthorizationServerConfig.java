@@ -1,5 +1,6 @@
 package com.rondinella.authorizationserver.config;
 
+import com.rondinella.authorizationserver.usermanaging.CryptoUserDatabase;
 import com.rondinella.authorizationserver.usermanaging.CryptoUserDetailsService;
 import com.rondinella.authorizationserver.usermanaging.UserRepository;
 import org.springframework.context.annotation.Bean;
@@ -46,8 +47,7 @@ public class AuthorizationServerConfig {
   @Bean
   @Order(Ordered.HIGHEST_PRECEDENCE)
   public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
-                                                                    CryptoUserDetailsService service,
-                                                                    UserRepository repository) throws Exception {
+                                                                    CryptoUserDetailsService service) throws Exception {
     OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
         new OAuth2AuthorizationServerConfigurer();
     RequestMatcher endpointsMatcher = authorizationServerConfigurer
@@ -87,6 +87,7 @@ public class AuthorizationServerConfig {
       throws Exception {
     http
         .authorizeHttpRequests((authorize) -> authorize
+            .requestMatchers("/addUser").hasRole("ADMIN")
             .anyRequest().authenticated()
         )
         // Form login handles the redirect to the login page from the
@@ -97,7 +98,8 @@ public class AuthorizationServerConfig {
   }
 
   @Bean
-  public RegisteredClientRepository registeredClientRepository() {
+  public RegisteredClientRepository registeredClientRepository(CryptoUserDetailsService service) {
+
     RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
         .clientId("crypto-client")
         .clientSecret("{noop}secret")
@@ -115,18 +117,4 @@ public class AuthorizationServerConfig {
 
     return new InMemoryRegisteredClientRepository(registeredClient);
   }
-
-  /*
-  @Bean
-  public UserDetailsService userDetailsService() {
-    UserDetails userDetails = User.withDefaultPasswordEncoder()
-        .username("admin")
-        .password("admin")
-        .roles("ADMIN")
-        .build();
-
-    return new InMemoryUserDetailsManager(userDetails);
-  }
-   */
-
 }

@@ -17,8 +17,6 @@ public class  DefaultController {
   @GetMapping("/index")
   public String index(Model model, @AuthenticationPrincipal OidcUser principal) {
     model.addAttribute("name", principal.getUserInfo().getFullName());
-    model.addAttribute("infophone", principal.getUserInfo().getPhoneNumber());
-    model.addAttribute("phone", principal.getPhoneNumber());
     model.addAttribute("wallets", principal.getUserInfo().getClaim("private_keys"));
     return "index";
   }

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authorization Server</title>
+    <style>
+        form {
+            margin: 20px auto;
+            padding: 20px;
+            width: 400px;
+            background-color: lightgray;
+            border-radius: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input{
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: none;
+        }
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: green;
+            color: white;
+            border-radius: 5px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h1 style="text-align: center;">Authorization Server</h1>
+<form action="#" th:action="@{/addUser}" th:object="${cryptoUserDatabase}" method="post">
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" th:field="*{username}" />
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" th:field="*{password}" />
+    </div>
+    <div>
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" th:field="*{firstName}" />
+    </div>
+    <div>
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" th:field="*{lastName}" />
+    </div>
+    <div>
+        <label for="gender">Gender:</label>
+        <input type="text" id="gender" th:field="*{gender}" />
+    </div>
+    <div>
+        <label for="birthdate">Birthdate:</label>
+        <input type="text" id="birthdate" th:field="*{birthdate}" />
+    </div>
+    <div>
+        <label for="locale">Locale:</label>
+        <input type="text" id="locale" th:field="*{locale}" />
+    </div>
+    <div>
+        <label for="email">Email:</label>
+        <input type="text" id="email" th:field="*{email}" />
+    </div>
+    <div>
+        <input type="submit" value="Submit"/>
+    </div>
+</form>
+</body>
+</html>
