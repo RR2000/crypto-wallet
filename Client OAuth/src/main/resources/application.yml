@@ -1,5 +1,5 @@
 server:
-  port: 80
+  port: 8080
 
 logging:
   level:
@@ -20,4 +20,4 @@ spring:
             client-name: messaging-client-oidc
         provider:
           spring:
-            issuer-uri: "http://localhost:9000"
+            issuer-uri: http://localhost:9000
