@@ -22,10 +22,20 @@ public class DefaultController {
     this.service = service;
   }
 
+  @GetMapping("/newUser")
+  public String newUser(Model model) {
+	  model.addAttribute("cryptoUserDatabase", new CryptoUserDatabase());
+	  return "newUser";
+  }
+  
+  @GetMapping("/login")
+  public String login(){
+	  return "login";
+  }
+  
   @GetMapping("/")
   public String index(Model model) {
     principal = (CryptoUserPrincipal)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    model.addAttribute("cryptoUserDatabase", new CryptoUserDatabase());
     return "index";
   }
 
@@ -37,7 +47,7 @@ public class DefaultController {
       user.addAuthority("USER");
       service.addCryptoUser(user);
     }
-    return index(model);
+    return login();
   }
 
   @PostMapping( "/addPrivateKey")
