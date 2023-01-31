@@ -41,7 +41,7 @@
 <form action="#" th:action="@{/addUser}" th:object="${cryptoUserDatabase}" method="post">
     <div>
         <label for="username">Username:</label>
-        <input type="text" id="username" th:field="*{username}" required />
+        <input type="text" id="username" th:field="*{username}" value="user123" required />
     </div>
     <div>
         <label for="password">Password:</label>

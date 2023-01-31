@@ -24,9 +24,8 @@ public class DefaultController {
 
   @GetMapping("/")
   public String index(Model model) {
-    model.addAttribute("cryptoUserDatabase", new CryptoUserDatabase());
     principal = (CryptoUserPrincipal)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    System.out.println(principal.getUsername());
+    model.addAttribute("cryptoUserDatabase", new CryptoUserDatabase());
     return "index";
   }
 
