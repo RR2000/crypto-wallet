@@ -15,18 +15,12 @@ public class CryptoUserOidc extends OidcUserInfo {
   }
 
   public static Map<String, Object> findByUsername(CryptoUserDatabase db, Set<String> scopes) {
-    String subject = db.getUsername();
-    OidcUserInfo.Builder builder = OidcUserInfo.builder().subject(subject);
+    OidcUserInfo.Builder builder = OidcUserInfo.builder().subject(db.getEmail());
     if (!scopes.isEmpty()) {
       if (scopes.contains(OidcScopes.PROFILE)) {
         builder.name(db.getFirstName() + " " + db.getLastName())
             .givenName(db.getFirstName())
             .familyName(db.getLastName())
-            .nickname(subject)
-            .preferredUsername(subject)
-            .gender(db.getGender())
-            .birthdate(db.getBirthdate())
-            .locale(db.getLocale())
             .updatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
       }
       if (scopes.contains(OidcScopes.EMAIL)) {

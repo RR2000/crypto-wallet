@@ -85,9 +85,10 @@ public class AuthorizationServerConfig {
   @Bean
   public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
       throws Exception {
-    http
+    http.authorizeHttpRequests()
+        .requestMatchers("/newUser").permitAll()
+        .requestMatchers("/addUser").permitAll().and()
         .authorizeHttpRequests((authorize) -> authorize
-                .requestMatchers("/newUser").permitAll()
             .anyRequest().authenticated()
         )
         // Form login handles the redirect to the login page from the

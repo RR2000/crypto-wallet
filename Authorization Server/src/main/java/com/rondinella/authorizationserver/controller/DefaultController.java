@@ -41,13 +41,13 @@ public class DefaultController {
 
   @PostMapping(value = "/addUser")
   public String addUser(Model model, @ModelAttribute CryptoUserDatabase user) {
-    if(user.getPassword().length() > 0 && user.getUsername().length() > 0) {
+    if(user.getPassword().length() > 0 && user.getEmail().length() > 0) {
       //TODO mettere crittografia
       user.setPassword("{noop}" + user.getPassword());
       user.addAuthority("USER");
       service.addCryptoUser(user);
     }
-    return login();
+    return "login";
   }
 
   @PostMapping( "/addPrivateKey")

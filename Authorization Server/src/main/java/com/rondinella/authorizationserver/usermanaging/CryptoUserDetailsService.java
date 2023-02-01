@@ -20,7 +20,7 @@ public class CryptoUserDetailsService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String username) {
-    CryptoUserDatabase cryptoUserDatabase = userRepository.findByUsername(username);
+    CryptoUserDatabase cryptoUserDatabase = userRepository.findByEmail(username);
     if (cryptoUserDatabase == null) {
       throw new UsernameNotFoundException(username);
     }
@@ -28,7 +28,7 @@ public class CryptoUserDetailsService implements UserDetailsService {
   }
 
   public OidcUserInfo loadOidcUserByUsername(String username, Set<String> scopes) {
-    CryptoUserDatabase cryptoUserDatabase = userRepository.findByUsername(username);
+    CryptoUserDatabase cryptoUserDatabase = userRepository.findByEmail(username);
     if (cryptoUserDatabase == null) {
       throw new UsernameNotFoundException(username);
     }
@@ -39,7 +39,7 @@ public class CryptoUserDetailsService implements UserDetailsService {
   @Transactional
   public void addCryptoUser(CryptoUserDatabase user) {
     CryptoUserDatabase userName = new CryptoUserDatabase();
-    userName.setUsername(user.getUsername());
+    userName.setEmail(user.getEmail());
     userName.setPassword(user.getPassword());
     userRepository.save(userName);
     userRepository.save(user);
@@ -47,7 +47,7 @@ public class CryptoUserDetailsService implements UserDetailsService {
 
   @Transactional
   public void updateCryptoUser(String username, String private_key) {
-    CryptoUserDatabase user = userRepository.findByUsername(username);
+    CryptoUserDatabase user = userRepository.findByEmail(username);
     user.addWallet(private_key);
     userRepository.save(user);
   }

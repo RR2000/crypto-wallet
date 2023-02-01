@@ -23,7 +23,7 @@ public class CryptoUserPrincipal implements UserDetails {
 
   @Override
   public String getUsername() {
-    return cryptoUserDatabase.getUsername();
+    return cryptoUserDatabase.getEmail();
   }
 
   @Override
