@@ -111,6 +111,7 @@ public class AuthorizationServerConfig {
         .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
         .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
         .redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
+        .redirectUri("http://127.0.0.1:5173/callback")
         .scope(OidcScopes.OPENID)
         .scope(OidcScopes.PROFILE)
         .scope(OidcScopes.PHONE)
