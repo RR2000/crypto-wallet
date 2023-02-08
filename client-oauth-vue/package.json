@@ -1,0 +1,21 @@
+{
+  "name": "client-oauth-vue",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "-": "^0.0.1",
+    "save": "^2.9.0",
+    "vue": "^3.2.47",
+    "vue-server-renderer": "^2.7.14"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.0.0",
+    "vite": "^4.0.0",
+    "vue-router": "^4.1.6"
+  }
+}
