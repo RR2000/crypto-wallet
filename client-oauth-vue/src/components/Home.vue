@@ -1,6 +1,6 @@
 <script setup>
-
 import LoginButton from "./buttons/login-button.vue";
+
 </script>
 
 <template>

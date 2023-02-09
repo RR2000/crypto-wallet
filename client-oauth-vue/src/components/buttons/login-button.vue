@@ -5,14 +5,12 @@
 </template>
 
 <script setup>
-import {useAuth0} from "@auth0/auth0-vue";
-
-const { loginWithRedirect } = useAuth0();
+import {UserManager, settings} from "../../js/oidc-settings";
 
 const handleLogin = () => {
-  loginWithRedirect();
-  const { user } = useAuth0();
-  const code = user ? JSON.stringify(user.value, null, 2) : "";
-  alert(code)
+  new UserManager(settings).signinRedirect().then(function() {
+  }).catch(function(err) {
+    console.error(err);
+  });
 };
 </script>
