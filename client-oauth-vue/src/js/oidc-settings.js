@@ -1,4 +1,4 @@
-import { Log, OidcClient, UserManager } from "oidc-client-ts"
+import {Log, OidcClient, UserManager} from "oidc-client-ts"
 
 Log.setLogger(console);
 Log.setLevel(Log.DEBUG);
@@ -10,9 +10,8 @@ export const settings = {
     redirect_uri: "http://127.0.0.1:5173/callback",
     response_type: "code",
     loadUserInfo: true,
-    filterProtocolClaims: false,
+    scope: "openid profile email wallets.private_keys",
     client_authentication: "client_secret_basic",
-    scope: "openid profile phone wallets.private_keys",
 };
 
 export {

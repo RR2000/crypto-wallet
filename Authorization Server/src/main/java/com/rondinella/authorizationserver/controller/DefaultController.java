@@ -60,28 +60,11 @@ public class DefaultController {
     return "login";
   }
 
-  ///4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318
-  public static File encodeWallet(BigInteger privateKey, String password) throws IOException, CipherException {
-    ECKeyPair keyPair = ECKeyPair.create(privateKey);
-    File walletFile = File.createTempFile("wallet", ".json");
-    String name = WalletUtils.generateWalletFile(password, keyPair, walletFile.getParentFile(), false);
-
-    return new File(walletFile.getParentFile() + "/" + name);
-  }
-
-
   @PostMapping("/addPrivateKey")
   public String addPrivateKey(Model model,
-                              @RequestParam String private_key) throws CipherException, IOException {
-    BigInteger privateKey = new BigInteger(private_key, 16);
-    String password = "mypassword";
+                              @RequestParam String private_key) {
 
-    File walletContents = encodeWallet(privateKey, password);
-    System.out.println(FileUtils.readFileToString(walletContents, "UTF-8"));
-
-    Credentials credentials = WalletUtils.loadCredentials(password, walletContents);
-    System.out.printf("%x", credentials.getEcKeyPair().getPrivateKey());
-
+    service.updateCryptoUser(principal.getUsername(), private_key);
     return index(model);
   }
 }

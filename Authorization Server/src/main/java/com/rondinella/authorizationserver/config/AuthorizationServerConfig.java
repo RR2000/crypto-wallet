@@ -119,7 +119,7 @@ public class AuthorizationServerConfig {
         .redirectUri("http://127.0.0.1:5173/callback")
         .scope(OidcScopes.OPENID)
         .scope(OidcScopes.PROFILE)
-        .scope(OidcScopes.PHONE)
+        .scope(OidcScopes.EMAIL)
         .scope("wallets.private_keys")
         .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
         .build();

@@ -16,7 +16,7 @@ spring:
             client-secret: secret
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: openid, profile, phone, wallets.private_keys
+            scope: openid, profile, email, wallets.private_keys
             client-name: messaging-client-oidc
         provider:
           spring:
