@@ -48,6 +48,7 @@ const createNewAccount = async (instance, password) => {
   const myRemoteWallet = await retrieveWallet(instance, password);
   myRemoteWallet.add(web3.eth.accounts.create());
   await updateWallet(myRemoteWallet, password);
+  await retrieveWallet(instance, password)
 };
 
 const performLogout = async () => {
@@ -64,15 +65,16 @@ const addPrivateKey = async (instance, privateKeyInput, password) => {
   const myRemoteWallet = await retrieveWallet(instance, password);
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(privateKeyInput, true));
   await updateWallet(myRemoteWallet, password);
+  await retrieveWallet(instance, password)
 };
 
 const retrieveWallet = async (instance, password) => {
+  instance.myAddresses = []
   const user = await userManager.signinSilent();
   axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
   const encryptedWallet = JSON.parse(user.profile["private_keys"]);
   let decryptedWallet;
   try {
-    alert(password)
     decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
   } catch (error) {
     alert("Mmm... La tua password mi sembra errata!");
