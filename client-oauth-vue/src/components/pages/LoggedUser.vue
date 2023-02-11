@@ -1,5 +1,6 @@
 <template>
   <h1>Your personal page</h1>
+  <button @click="performLogout">Logout</button>
   {{ wallet }}
   <div>
     <form @submit.prevent="submitForm">
@@ -40,6 +41,16 @@ export default {
           console.error("Error:", error);
         })
       })
+    },
+    async performLogout() {
+      try {
+        await userManager.signoutSilent()
+      } catch (error) {
+        console.error("Error during sign-out:", error);
+      } finally {
+        //await this.checkLoginStatus()
+        window.location.reload();
+      }
     }
   },
   data() {

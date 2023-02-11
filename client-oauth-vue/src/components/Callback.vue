@@ -1,12 +1,10 @@
 <script setup>
 import {userManager} from "../js/oidc-settings";
-import Web3 from 'web3'
 import axios from "axios";
 
 userManager.signinCallback().then(
     function (user) {
       axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`;
-
     }
 )
 
