@@ -2,7 +2,12 @@
   <div>
     <h1>Your personal page</h1>
     <button @click="performLogout">Logout</button>
-    <div>{{ wallet }}</div>
+    <div v-if="myAddresses.length > 0">
+      <h2>Public Keys:</h2>
+      <ul>
+        <li v-for="address in myAddresses" :key="address">{{ address }}</li>
+      </ul>
+    </div>
     <div>
       <input type="text" v-model="privateKeyInput" placeholder="Enter private key"><br>
       <input type="password" v-model="password" placeholder="Enter password">
@@ -23,7 +28,13 @@ async function retrieveWallet(password) {
   const user = await userManager.signinSilent();
   axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
   const encryptedWallet = JSON.parse(user.profile["private_keys"]);
-  return web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
+  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
+
+  for (let i = 0; i < decryptedWallet.length; i++) {
+    this.myAddresses.push(decryptedWallet[i].address);
+  }
+
+  return decryptedWallet;
 }
 
 async function updateWallet(plainWallet, password) {
@@ -40,18 +51,18 @@ async function updateWallet(plainWallet, password) {
   }
 }
 
-async function addPrivateKey(privateKeyInput, password){
-  let myRemoteWallet = await retrieveWallet(password)
-  //TODO remove ignore length, dev only
-  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(privateKeyInput, true))
-  await updateWallet(myRemoteWallet, password)
+async function addPrivateKey(privateKeyInput, password) {
+  const myRemoteWallet = await retrieveWallet(password);
+  // TODO remove ignore length, dev only
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(privateKeyInput, true));
+  await updateWallet(myRemoteWallet, password);
 }
 
 export default {
   name: "LoggedUser",
-  async created() {
+  created() {
     this.password = "";
-    this.wallet = "";
+    this.myAddresses = [];
   },
   methods: {
     retrieveWallet,
@@ -68,9 +79,9 @@ export default {
   },
   data() {
     return {
-      wallet: "",
       privateKeyInput: "",
       password: "",
+      myAddresses: [],
     };
   },
 };
