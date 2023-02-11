@@ -1,14 +1,17 @@
 <template>
-  <h1>Your personal page</h1>
-  <button @click="performLogout">Logout</button>
-  {{ wallet }}
   <div>
-    <form @submit.prevent="submitForm">
-      <input type="text" v-model="privateKeyInput" placeholder="Enter private key">
-      <button type="submit">Submit</button>
-    </form>
+    <h1>Your personal page</h1>
+    <button @click="performLogout">Logout</button>
+    <div>{{ wallet }}</div>
+    <div>
+      <input type="text" v-model="privateKeyInput" placeholder="Enter private key"><br>
+      <input type="password" v-model="password" placeholder="Enter password">
+      <button @click.prevent="retrieveWallet(password)">Retrieve Wallet</button>
+      <button @click.prevent="addPrivateKey(privateKeyInput, password)">Submit</button>
+    </div>
   </div>
 </template>
+
 <script>
 import Web3 from "web3";
 import { userManager } from "../../js/oidc-settings";
@@ -16,16 +19,15 @@ import axios from "axios";
 
 const web3 = new Web3();
 
-async function retriveWallet(password){
+async function retrieveWallet(password) {
   const user = await userManager.signinSilent();
   axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
-  console.log("userm", user.profile["private_keys"])
-  const encryptedWallet = JSON.parse(user.profile["private_keys"])
-  return web3.eth.accounts.wallet.decrypt(encryptedWallet, password)
+  const encryptedWallet = JSON.parse(user.profile["private_keys"]);
+  return web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
 }
 
 async function updateWallet(plainWallet, password) {
-  let encryptedWallet = plainWallet.encrypt(password)
+  const encryptedWallet = plainWallet.encrypt(password);
   const user = await userManager.signinSilent();
   axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
   const input = new FormData();
@@ -38,48 +40,22 @@ async function updateWallet(plainWallet, password) {
   }
 }
 
-async function cose(){
-  let vuoto = web3.eth.accounts.wallet.create();
-  let password = "pwd"
-
-  await updateWallet(vuoto, password)
-
-  let retrievedVuoto = await retriveWallet(password)
-
-  let aggiungoUno = retrievedVuoto.add(web3.eth.accounts.create())
-
-  await updateWallet(aggiungoUno, password)
+async function addPrivateKey(privateKeyInput, password){
+  let myRemoteWallet = await retrieveWallet(password)
+  //TODO remove ignore length, dev only
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(privateKeyInput, true))
+  await updateWallet(myRemoteWallet, password)
 }
-
 
 export default {
   name: "LoggedUser",
   async created() {
-    this.wallet = await cose();
+    this.password = "";
+    this.wallet = "";
   },
   methods: {
-    async submitForm() {
-      let self = this;
-      await userManager
-          .signinSilent()
-          .then(async (user) => {
-            axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
-            const input = new FormData();
-            input.append("private_key", self.privateKeyInput);
-            await axios
-                .post("http://127.0.0.1:9000/addPrivateKey", input)
-                .then(async (response) => {
-                  self.wallet = await getUserWallet();
-                  console.log("WALLET UPDATED: ", self.wallet);
-                })
-                .catch((error) => {
-                  console.error("Error:", error);
-                });
-          })
-          .catch((error) => {
-            console.error("Error submitting form:", error);
-          });
-    },
+    retrieveWallet,
+    addPrivateKey,
     async performLogout() {
       try {
         await userManager.signoutSilent();
@@ -94,6 +70,7 @@ export default {
     return {
       wallet: "",
       privateKeyInput: "",
+      password: "",
     };
   },
 };
