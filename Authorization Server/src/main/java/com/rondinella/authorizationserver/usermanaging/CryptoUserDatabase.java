@@ -32,7 +32,7 @@ public class CryptoUserDatabase {
   @CollectionTable(name = "authorities")
   private List<String> grantedAuthorities = new ArrayList<>();
 
-  private String wallet;
+  private String wallet = "[]";
 
   @Column(nullable = false)
   private boolean isAccountExpired = false;
