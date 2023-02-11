@@ -32,9 +32,7 @@ public class CryptoUserDatabase {
   @CollectionTable(name = "authorities")
   private List<String> grantedAuthorities = new ArrayList<>();
 
-  @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(name = "wallets")
-  private List<String> wallets = new ArrayList<>();
+  private String wallet;
 
   @Column(nullable = false)
   private boolean isAccountExpired = false;
@@ -74,25 +72,12 @@ public class CryptoUserDatabase {
     this.grantedAuthorities.addAll(stringAuthorities);
   }
 
-  public void addWallet(String wallet){
-    ArrayList<String> wal = new ArrayList<>();
-    wal.add(wallet);
-    addWallets(wal);
+  public String getWallet() {
+    return wallet;
   }
 
-  public void addWallets(List<String> wallets){
-    if(this.wallets == null)
-      this.wallets = new ArrayList<>();
-
-    this.wallets.addAll(wallets);
-  }
-
-  public void setWallets(List<String> wallets) {
-    this.wallets = wallets;
-  }
-
-  public List<String> getWallets() {
-    return wallets;
+  public void setWallet(String wallet) {
+    this.wallet = wallet;
   }
 
   public String getPassword() {

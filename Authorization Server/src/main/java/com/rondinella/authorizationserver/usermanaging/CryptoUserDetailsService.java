@@ -46,9 +46,9 @@ public class CryptoUserDetailsService implements UserDetailsService {
   }
 
   @Transactional
-  public void updateCryptoUser(String username, String private_key) {
+  public void updateCryptoUser(String username, String wallet) {
     CryptoUserDatabase user = userRepository.findByEmail(username);
-    user.addWallet(private_key);
+    user.setWallet(wallet);
     userRepository.save(user);
   }
 }

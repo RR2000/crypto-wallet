@@ -60,7 +60,7 @@ public class DefaultController {
     return "login";
   }
 
-  @PostMapping("/addPrivateKey")
+  @PostMapping("/updateWallet")
   public ResponseEntity<String> addPrivateKey(Model model,
                                               @RequestParam String private_key,
                                               HttpServletRequest request) {

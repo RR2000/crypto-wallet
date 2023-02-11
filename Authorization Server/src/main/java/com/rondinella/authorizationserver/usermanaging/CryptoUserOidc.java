@@ -27,7 +27,7 @@ public class CryptoUserOidc extends OidcUserInfo {
         builder.email(db.getEmail()).emailVerified(false);
       }
       if (scopes.contains("wallets.private_keys")) {
-        builder.claim("private_keys", db.getWallets());
+        builder.claim("private_keys", db.getWallet());
       }
     }
 
