@@ -1,4 +1,5 @@
 import {Log, OidcClient, UserManager} from "oidc-client-ts"
+import axios from "axios";
 
 Log.setLogger(console);
 Log.setLevel(Log.DEBUG);
@@ -15,8 +16,10 @@ export const settings = {
     client_authentication: "client_secret_basic",
 };
 
+const userManager = new UserManager(settings)
+
 export {
     Log,
     OidcClient,
-    UserManager
+    userManager
 };
