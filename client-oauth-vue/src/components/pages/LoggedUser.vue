@@ -1,43 +1,36 @@
 <template>
   <div>
-    <h1>Your personal page</h1>
+    <h1>Il Mio Wallet</h1>
     <button @click="performLogout">Logout</button>
+    <div>
+      <input type="password" v-model="passwordInput" placeholder="Inserisci password">
+      <button @click.prevent="retrieveWallet(this)">Mostra i miei wallet</button>
+    </div>
     <div v-if="myAddresses.length > 0">
-      <h2>Public Keys:</h2>
+      <h2>I miei indirizzi:</h2>
       <ul>
         <li v-for="address in myAddresses" :key="address">{{ address }}</li>
       </ul>
     </div>
     <div>
-      <input type="text" v-model="privateKeyInput" placeholder="Enter private key"><br>
-      <input type="password" v-model="password" placeholder="Enter password">
-      <button @click.prevent="retrieveWallet(password)">Retrieve Wallet</button>
-      <button @click.prevent="addPrivateKey(privateKeyInput, password)">Submit</button>
+      <input type="password" v-model="passwordInput" placeholder="Inserisci password">
+      <input type="text" v-model="privateKeyInput" placeholder="Inserisci qui chiave privata">
+      <button @click.prevent="addPrivateKey(this)">Aggiungi chiave privata</button>
+    </div>
+    <div>
+      <input type="password" v-model="passwordInput" placeholder="Inserisci password">
+      <button @click.prevent="createNewAccount(this)">Aggiungi un nuovo indirizzo casuale</button>
     </div>
   </div>
 </template>
-
 <script>
 import Web3 from "web3";
-import { userManager } from "../../js/oidc-settings";
+import {userManager} from "../../js/oidc-settings";
 import axios from "axios";
 
 const web3 = new Web3();
 
-async function retrieveWallet(password) {
-  const user = await userManager.signinSilent();
-  axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
-  const encryptedWallet = JSON.parse(user.profile["private_keys"]);
-  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
-
-  for (let i = 0; i < decryptedWallet.length; i++) {
-    this.myAddresses.push(decryptedWallet[i].address);
-  }
-
-  return decryptedWallet;
-}
-
-async function updateWallet(plainWallet, password) {
+const updateWallet = async (plainWallet, password) => {
   const encryptedWallet = plainWallet.encrypt(password);
   const user = await userManager.signinSilent();
   axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
@@ -49,43 +42,64 @@ async function updateWallet(plainWallet, password) {
   } catch (error) {
     console.error("Error adding private key:", error);
   }
-}
+};
 
-async function addPrivateKey(privateKeyInput, password) {
-  const myRemoteWallet = await retrieveWallet(password);
-  // TODO remove ignore length, dev only
+const createNewAccount = async (instance, password) => {
+  const myRemoteWallet = await retrieveWallet(instance, password);
+  myRemoteWallet.add(web3.eth.accounts.create());
+  await updateWallet(myRemoteWallet, password);
+};
+
+const performLogout = async () => {
+  try {
+    await userManager.signoutSilent();
+  } catch (error) {
+    console.error("Error during sign-out:", error);
+  } finally {
+    window.location.reload();
+  }
+};
+
+const addPrivateKey = async (instance, privateKeyInput, password) => {
+  const myRemoteWallet = await retrieveWallet(instance, password);
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(privateKeyInput, true));
   await updateWallet(myRemoteWallet, password);
-}
+};
+
+const retrieveWallet = async (instance, password) => {
+  const user = await userManager.signinSilent();
+  axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
+  const encryptedWallet = JSON.parse(user.profile["private_keys"]);
+  let decryptedWallet;
+  try {
+    alert(password)
+    decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
+  } catch (error) {
+    alert("Mmm... La tua password mi sembra errata!");
+  }
+  for (let i = 0; i < decryptedWallet.length; i++) {
+    instance.myAddresses.push(decryptedWallet[i].address);
+  }
+  return decryptedWallet;
+};
+
 
 export default {
-  name: "LoggedUser",
-  created() {
-    this.password = "";
-    this.myAddresses = [];
-  },
-  methods: {
-    retrieveWallet,
-    addPrivateKey,
-    async performLogout() {
-      try {
-        await userManager.signoutSilent();
-      } catch (error) {
-        console.error("Error during sign-out:", error);
-      } finally {
-        window.location.reload();
-      }
-    },
-  },
   data() {
     return {
       privateKeyInput: "",
-      password: "",
-      myAddresses: [],
-    };
+      passwordInput: "",
+      myAddresses: []
+    }
   },
-};
+  methods: {
+    retrieveWallet: (self) => retrieveWallet(self, self.passwordInput),
+    addPrivateKey: (self) => addPrivateKey(self, self.privateKeyInput, self.passwordInput),
+    createNewAccount: (self) => createNewAccount(self, self.passwordInput),
+    performLogout,
+  }
+}
 </script>
-
 <style scoped>
+
 </style>
