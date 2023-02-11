@@ -4,24 +4,19 @@ import com.rondinella.authorizationserver.usermanaging.CryptoUserDatabase;
 import com.rondinella.authorizationserver.usermanaging.CryptoUserDetailsService;
 import com.rondinella.authorizationserver.usermanaging.CryptoUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
-import org.apache.commons.io.FileUtils;
-import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.web3j.crypto.CipherException;
-import org.web3j.crypto.Credentials;
-import org.web3j.crypto.ECKeyPair;
-import org.web3j.crypto.WalletUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.File;
-import java.io.IOException;
-import java.math.BigInteger;
 import java.util.Map;
 
 @Controller
@@ -66,20 +61,17 @@ public class DefaultController {
   }
 
   @PostMapping("/addPrivateKey")
-  public String addPrivateKey(Model model,
-                              @RequestParam String private_key,
-                              HttpServletRequest request) {
+  public ResponseEntity<String> addPrivateKey(Model model,
+                                              @RequestParam String private_key,
+                                              HttpServletRequest request) {
+
     String barer = request.getHeader("Authorization");
-    try {
-      String token = barer.split("Bearer ")[1];
-      Jwt jwt = jwtDecoder.decode(token);
-      Map<String, Object> claims = jwt.getClaims();
-      String username = claims.get("sub").toString();
-      service.updateCryptoUser(username, private_key);
-      return index(model);
-    } catch (Exception e) {
-      // handle error
-      return "Error";
-    }
+    String token = barer.split("Bearer ")[1];
+    Jwt jwt = jwtDecoder.decode(token);
+    Map<String, Object> claims = jwt.getClaims();
+    String username = claims.get("sub").toString();
+    service.updateCryptoUser(username, private_key);
+
+    return new ResponseEntity<>(HttpStatus.CREATED);
   }
 }
