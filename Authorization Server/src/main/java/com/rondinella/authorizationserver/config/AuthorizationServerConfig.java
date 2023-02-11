@@ -71,8 +71,7 @@ public class AuthorizationServerConfig {
                 .userInfoMapper(userInfoMapper)
             )
         );
-    http
-        .headers().frameOptions().sameOrigin().and()
+    http.headers().frameOptions().disable().and()
         .securityMatcher(endpointsMatcher)
         .authorizeHttpRequests((authorize) -> authorize
             .anyRequest().authenticated()
@@ -92,7 +91,8 @@ public class AuthorizationServerConfig {
   public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
       throws Exception {
 
-    http.authorizeHttpRequests((authorize) ->
+    http.headers().frameOptions().disable().and()
+        .authorizeHttpRequests((authorize) ->
             authorize
                 .requestMatchers("/newUser").permitAll()
                 .requestMatchers("/addUser").permitAll()

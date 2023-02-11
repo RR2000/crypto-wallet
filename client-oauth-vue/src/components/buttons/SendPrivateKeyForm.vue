@@ -8,6 +8,7 @@
 </template>
 
 <script setup>
+
 import axios from "axios";
 import {settings, UserManager} from "../../js/oidc-settings";
 
@@ -16,7 +17,6 @@ let private_key = ""
 const submitForm = () => {
   new UserManager(settings).signinSilent().then(function (user) {
     axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`;
-    alert(axios.defaults.headers.common['Authorization'])
   })
   console.log("access_token", axios.defaults.headers.common['Authorization'])
   let input = new FormData()

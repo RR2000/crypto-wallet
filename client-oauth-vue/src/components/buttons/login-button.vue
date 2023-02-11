@@ -8,9 +8,14 @@
 import axios from 'axios';
 import {UserManager, settings} from "../../js/oidc-settings";
 
-async function performLogin() {
-  await new UserManager(settings).signinRedirect()
+const userManager = new UserManager(settings);
 
+async function performLogin() {
+  try {
+    await userManager.signinRedirect();
+  } catch (error) {
+    console.error("Error during sign-in:", error);
+  }
 }
 
 </script>
