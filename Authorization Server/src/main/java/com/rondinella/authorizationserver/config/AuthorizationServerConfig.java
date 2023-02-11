@@ -72,6 +72,7 @@ public class AuthorizationServerConfig {
             )
         );
     http
+        .headers().frameOptions().sameOrigin().and()
         .securityMatcher(endpointsMatcher)
         .authorizeHttpRequests((authorize) -> authorize
             .anyRequest().authenticated()
@@ -90,12 +91,15 @@ public class AuthorizationServerConfig {
   @Bean
   public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
       throws Exception {
-    http.authorizeHttpRequests()
-        .requestMatchers("/newUser").permitAll()
-        .requestMatchers("/addUser").permitAll().and()
-        .authorizeHttpRequests((authorize) -> authorize
+
+    http.authorizeHttpRequests((authorize) ->
+            authorize
+                .requestMatchers("/newUser").permitAll()
+                .requestMatchers("/addUser").permitAll()
             .anyRequest().authenticated()
         )
+        .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+
         // Form login handles the redirect to the login page from the
         // authorization server filter chain
         .formLogin()

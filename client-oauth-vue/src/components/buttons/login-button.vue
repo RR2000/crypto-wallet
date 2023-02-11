@@ -1,16 +1,16 @@
 <template>
   <div>
-    <button @click="handleLogin">Login</button>
+    <button @click="performLogin">Login</button>
   </div>
 </template>
 
 <script setup>
+import axios from 'axios';
 import {UserManager, settings} from "../../js/oidc-settings";
 
-const handleLogin = () => {
-  new UserManager(settings).signinRedirect().then(function() {
-  }).catch(function(err) {
-    console.error(err);
-  });
-};
+async function performLogin() {
+  await new UserManager(settings).signinRedirect()
+
+}
+
 </script>
