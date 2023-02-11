@@ -20,7 +20,7 @@ const submitForm = () => {
   })
   console.log("access_token", axios.defaults.headers.common['Authorization'])
   let input = new FormData()
-  input.append("private_key", "ti prego funziona")
+  input.append("private_key", private_key)
   axios.post("http://127.0.0.1:9000/addPrivateKey",input).
   then(response => {
     console.log("Response:", response.data);

@@ -9,6 +9,8 @@ import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ import org.web3j.crypto.WalletUtils;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Map;
 
 @Controller
 public class DefaultController {
@@ -27,10 +30,12 @@ public class DefaultController {
   CryptoUserPrincipal principal;
   CryptoUserDetailsService service;
   PasswordEncoder passwordEncoder;
+  JwtDecoder jwtDecoder;
 
-  DefaultController(CryptoUserDetailsService service, PasswordEncoder passwordEncoder) {
+  DefaultController(CryptoUserDetailsService service, PasswordEncoder passwordEncoder, JwtDecoder jwtDecoder) {
     this.service = service;
     this.passwordEncoder = passwordEncoder;
+    this.jwtDecoder = jwtDecoder;
   }
 
   @GetMapping("/newUser")
@@ -62,9 +67,19 @@ public class DefaultController {
 
   @PostMapping("/addPrivateKey")
   public String addPrivateKey(Model model,
-                              @RequestParam String private_key) {
-
-    service.updateCryptoUser(principal.getUsername(), private_key);
-    return index(model);
+                              @RequestParam String private_key,
+                              HttpServletRequest request) {
+    String barer = request.getHeader("Authorization");
+    try {
+      String token = barer.split("Bearer ")[1];
+      Jwt jwt = jwtDecoder.decode(token);
+      Map<String, Object> claims = jwt.getClaims();
+      String username = claims.get("sub").toString();
+      service.updateCryptoUser(username, private_key);
+      return index(model);
+    } catch (Exception e) {
+      // handle error
+      return "Error";
+    }
   }
 }
