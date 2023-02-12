@@ -6,12 +6,23 @@
       <input type="password" v-model="passwordInput" placeholder="Inserisci password">
       <button @click.prevent="retrieveWallet(this)">Mostra i miei wallet</button>
     </div>
-    <div v-if="myAddresses.length > 0">
-      <h2>I miei indirizzi:</h2>
-      <ul>
-        <li v-for="address in myAddresses" :key="address">{{ address }}</li>
-      </ul>
+    <div v-if="myWallet.length > 0">
+      <table>
+        <thead>
+        <tr>
+          <th>Indirizzo</th>
+          <th>Chiave privata</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="account in myWallet" :key="account">
+          <td>{{ account.address }}</td>
+          <td>{{ account.privateKey }}</td>
+        </tr>
+        </tbody>
+      </table>
     </div>
+
     <div>
       <input type="password" v-model="passwordInput" placeholder="Inserisci password">
       <input type="text" v-model="privateKeyInput" placeholder="Inserisci qui chiave privata">
@@ -69,7 +80,7 @@ const addPrivateKey = async (instance, privateKeyInput, password) => {
 };
 
 const retrieveWallet = async (instance, password) => {
-  instance.myAddresses = []
+  instance.myWallet = []
   const user = await userManager.signinSilent();
   axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
   const encryptedWallet = JSON.parse(user.profile["private_keys"]);
@@ -79,8 +90,9 @@ const retrieveWallet = async (instance, password) => {
   } catch (error) {
     alert("Mmm... La tua password mi sembra errata!");
   }
+  //todo non ha senso ma lo aveva
   for (let i = 0; i < decryptedWallet.length; i++) {
-    instance.myAddresses.push(decryptedWallet[i].address);
+    instance.myWallet.push(decryptedWallet[i]);
   }
   return decryptedWallet;
 };
@@ -91,7 +103,7 @@ export default {
     return {
       privateKeyInput: "",
       passwordInput: "",
-      myAddresses: []
+      myWallet: []
     }
   },
   methods: {

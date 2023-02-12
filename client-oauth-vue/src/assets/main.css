@@ -32,4 +32,22 @@ a,
     grid-template-columns: 1fr 1fr;
     padding: 0 2rem;
   }
+  table {
+    font-size: 0.9rem;
+  }
+
+  th,
+  td {
+    padding: 0.25rem;
+  }
+}
+
+
+th {
+  background-color: var(--color-background-soft);
+  font-weight: bold;
+}
+
+tr:hover td {
+  background-color: var(--color-background-mute);
 }
