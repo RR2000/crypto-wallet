@@ -34,6 +34,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
@@ -49,6 +50,19 @@ public class AuthorizationServerConfig {
     return AuthorizationServerSettings.builder().build();
   }
 
+  @Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration config = new CorsConfiguration();
+		config.addAllowedOrigin("*");
+		config.addAllowedHeader("*");
+		config.addAllowedMethod("*");
+
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", config);
+
+		return source;
+	}
+  
   @Bean
   @Order(Ordered.HIGHEST_PRECEDENCE)
   public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
@@ -83,8 +97,12 @@ public class AuthorizationServerConfig {
         )
         .apply(authorizationServerConfigurer);
 
+    http.cors().configurationSource(corsConfigurationSource());
+    
     return http.build();
   }
+  
+  
 
 
   @Bean
@@ -106,6 +124,8 @@ public class AuthorizationServerConfig {
         .loginPage("/login")
         .permitAll();
 
+    http.cors().configurationSource(corsConfigurationSource());
+    
     return http.build();
   }
 
