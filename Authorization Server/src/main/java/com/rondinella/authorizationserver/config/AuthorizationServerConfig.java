@@ -66,7 +66,8 @@ public class AuthorizationServerConfig {
   @Bean
   @Order(Ordered.HIGHEST_PRECEDENCE)
   public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
-                                                                    CryptoUserDetailsService service) throws Exception {
+                                                                    CryptoUserDetailsService service,
+                                                                    CorsConfigurationSource corsConfigurationSource) throws Exception {
     OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
         new OAuth2AuthorizationServerConfigurer();
     RequestMatcher endpointsMatcher = authorizationServerConfigurer
@@ -97,7 +98,7 @@ public class AuthorizationServerConfig {
         )
         .apply(authorizationServerConfigurer);
 
-    http.cors().configurationSource(corsConfigurationSource());
+    http.cors().configurationSource(corsConfigurationSource);
     
     return http.build();
   }
@@ -106,7 +107,7 @@ public class AuthorizationServerConfig {
 
 
   @Bean
-  public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
+  public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource)
       throws Exception {
 
     http.headers().frameOptions().disable().and()
@@ -124,7 +125,7 @@ public class AuthorizationServerConfig {
         .loginPage("/login")
         .permitAll();
 
-    http.cors().configurationSource(corsConfigurationSource());
+    http.cors().configurationSource(corsConfigurationSource);
     
     return http.build();
   }
