@@ -32,6 +32,7 @@ public class CryptoUserDatabase {
   @CollectionTable(name = "authorities")
   private List<String> grantedAuthorities = new ArrayList<>();
 
+  @Column(columnDefinition = "text")
   private String wallet = "[]";
 
   @Column(nullable = false)
