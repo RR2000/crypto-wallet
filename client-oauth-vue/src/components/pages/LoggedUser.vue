@@ -12,12 +12,14 @@
         <tr>
           <th>Indirizzo</th>
           <th>Chiave privata</th>
+          <th>Balance</th>
         </tr>
         </thead>
         <tbody>
         <tr v-for="account in myWallet" :key="account">
           <td>{{ account.address }}</td>
           <td>{{ account.privateKey }}</td>
+          <td>{{ account.balance }}</td>
         </tr>
         </tbody>
       </table>
@@ -39,7 +41,20 @@ import Web3 from "web3";
 import {userManager} from "../../js/oidc-settings";
 import axios from "axios";
 
-const web3 = new Web3();
+const blockchainURL = 'http://localhost:8545';
+const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000'; // Inserire qui la stringa esadecimale della chiave privata, incluso 0x iniziale
+const contractAddress = ''; // Inserire qui la stringa esadecimale dell'indirizzo del contratto, incluso 0x iniziale
+const gasPrice = "0"; // Inserire qui il gas price
+const gasLimit = 1000000; // Inserire qui il gas limit (aumentare il valore se necessario)
+// Configuration end
+
+// Initialization begin
+const web3 = new Web3(new Web3.providers.HttpProvider(blockchainURL));
+const account = web3.eth.accounts.privateKeyToAccount(accountPrivateKey);
+// questo per avere sempre l'account alten
+web3.eth.accounts.wallet.add(account);
+console.log(await web3.eth.getBalance(account.address))
+
 
 const updateWallet = async (plainWallet, password) => {
   const encryptedWallet = plainWallet.encrypt(password);
@@ -93,6 +108,7 @@ const retrieveWallet = async (instance, password) => {
   //todo non ha senso ma lo aveva
   for (let i = 0; i < decryptedWallet.length; i++) {
     instance.myWallet.push(decryptedWallet[i]);
+    instance.myWallet[i].balance = await web3.eth.getBalance(account.address);
   }
   return decryptedWallet;
 };
@@ -103,7 +119,8 @@ export default {
     return {
       privateKeyInput: "",
       passwordInput: "",
-      myWallet: []
+      myWallet: [],
+      web3: new Web3(new Web3.providers.HttpProvider(blockchainURL))
     }
   },
   methods: {
