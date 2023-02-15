@@ -13,6 +13,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider(bscURL));
 
 let showPrivateKeyDialog = ref(false);
 let showCreateAccountDialog = ref(false);
+let showImportPrivateKeyDialog = ref(false);
 let newPrivateKey = ref('');
 let password = ref('');
 const myWallet = ref([]);
@@ -71,9 +72,7 @@ async function retrieveMyWallet() {
   await retrieveWalletBalances();
 }
 
-function askCreateAccount(){
-  showCreateAccountDialog.value = true;
-}
+
 
 // Create a new account and update wallet
 async function createAccount(password) {
@@ -89,36 +88,46 @@ async function createAccount(password) {
 }
 
 // Add a new private key to the wallet
-async function addPrivateKey() {
-  const myRemoteWallet = await retrieveDecryptedWallet(password.value);
+async function addPrivateKey(password) {
+  const myRemoteWallet = await retrieveDecryptedWallet(password);
   console.log("my remote wallet: ", myRemoteWallet)
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value));
   console.log("my remote wallet aggiunto: ", myRemoteWallet)
   myWallet.value = []
   newPrivateKey.value = ""
   await Promise.all([
-    updateWallet(myRemoteWallet, password.value),
+    updateWallet(myRemoteWallet, password),
     retrieveEncryptedWallet(),
     retrieveWalletBalances()
   ]);
+  cancelAllDialog()
+}
+
+function askCreateAccount() {
+  showCreateAccountDialog.value = true;
+}
+
+function askImportPrivateKey() {
+  showImportPrivateKeyDialog.value = true
 }
 
 let walletAddress
+
 function askPrivateKey(clickedWallet) {
   walletAddress = clickedWallet
   showPrivateKeyDialog.value = true
 }
 
-function cancelAllDialog(){
+function cancelAllDialog() {
   walletAddress = ''
   showPrivateKeyDialog.value = false
   showCreateAccountDialog.value = false
+  showImportPrivateKeyDialog.value = false
 }
 
 // Show private key for a given wallet address
 async function showPrivateKey(password) {
   const myRemoteWallet = await retrieveDecryptedWallet(password);
-  password = ''
   let privateKey = null;
   for (let i = 0; i < myRemoteWallet.length; i++) {
     if (web3.utils.toChecksumAddress(myRemoteWallet[i].address)
@@ -202,7 +211,7 @@ onMounted(async function () {
           </VRow>
           <VRow>
             <VCol>
-              <VBtn type="addPrivateKey" @click="addPrivateKey">
+              <VBtn type="addPrivateKey" @click="askImportPrivateKey">
                 Importa
               </VBtn>
             </VCol>
@@ -221,6 +230,12 @@ onMounted(async function () {
     v-model="showCreateAccountDialog"
     title="Inserisci la password per aggiungere un nuovo indirizzo"
     @confirm="createAccount"
+    @cancel="cancelAllDialog"
+  />
+  <password-dialog
+    v-model="showImportPrivateKeyDialog"
+    title="Inserisci la password per aggiungere un nuovo indirizzo"
+    @confirm="addPrivateKey"
     @cancel="cancelAllDialog"
   />
 </template>

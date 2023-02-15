@@ -37,10 +37,12 @@ export default {
     confirm() {
       this.dialog = false;
       this.$emit('confirm', this.password);
+      this.password = ''
     },
     cancel() {
       this.dialog = false;
       this.$emit('cancel');
+      this.password = ''
     },
   },
 };
