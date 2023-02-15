@@ -16,18 +16,25 @@ let showCreateAccountDialog = ref(false);
 let showImportPrivateKeyDialog = ref(false);
 let newPrivateKey = ref('');
 let password = ref('');
-const myWallet = ref([]);
+let walletTable = ref([]);
+let accountNames = ref([]);
 
-// Retrieve encrypted wallet
 async function retrieveEncryptedWallet() {
   const user = await userManager.signinSilent();
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
-  const encryptedWallet = JSON.parse(user.profile.private_keys);
+  let encryptedWallet = JSON.parse(user.profile.private_keys)[0]
   console.log("retrieveEncryptedWallet", encryptedWallet)
   return encryptedWallet;
 }
 
-// Decrypt wallet using password
+async function retrieveNames() {
+  const user = await userManager.signinSilent();
+  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
+  let names = JSON.parse(user.profile.private_keys)[1]
+  console.log("retrieveNames", names)
+  return names;
+}
+
 async function retrieveDecryptedWallet() {
   const encryptedWallet = await retrieveEncryptedWallet();
   console.log("retrieveDecryptedWallet enc ", encryptedWallet)
@@ -36,13 +43,29 @@ async function retrieveDecryptedWallet() {
   return decryptedWallet;
 }
 
-// Update wallet with new private key
+async function updateAccountNames() {
+  let encryptedWallet = await retrieveEncryptedWallet()
+
+  const formData = new FormData();
+  formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]));
+  try {
+    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData);
+    console.log('Private key added:', response);
+  } catch (error) {
+    console.error('Error adding private key:', error);
+  }
+  await retrieveMyWallet();
+  await retrieveNames();
+}
+
 async function updateWallet(plainWallet) {
-  const encryptedWallet = plainWallet.encrypt(password.value);
+  let encryptedWallet = plainWallet.encrypt(password.value);
+
   const user = await userManager.signinSilent();
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
+
   const formData = new FormData();
-  formData.append('private_key', JSON.stringify(encryptedWallet));
+  formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
   try {
     const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData);
     console.log('Private key added:', response);
@@ -52,33 +75,35 @@ async function updateWallet(plainWallet) {
   await retrieveMyWallet();
 }
 
-// Retrieve balance of each wallet in myWallet array
+// Retrieve balance of each wallet in walletTable array
 async function retrieveWalletBalances() {
-  await Promise.all(myWallet.value.map(async (wallet) => {
+  await Promise.all(walletTable.value.map(async (wallet) => {
     const balance = await web3.eth.getBalance(wallet.address);
     console.log(balance);
     wallet.balance = web3.utils.fromWei(balance, 'ether');
   }));
 }
 
-// Retrieve encrypted wallet and map to myWallet array
+
 async function retrieveMyWallet() {
   const encryptedWallet = await retrieveEncryptedWallet();
-  myWallet.value = encryptedWallet.map((wallet) => ({
-    name: wallet.name,
+  accountNames.value = await retrieveNames()
+  walletTable.value = []
+
+  console.log("names", accountNames.value)
+
+  walletTable.value = encryptedWallet.map((wallet, i) => ({
     address: wallet.address,
-    balance: 0,
+    balance: wallet.balance,
   }));
   await retrieveWalletBalances();
 }
-
 
 
 // Create a new account and update wallet
 async function createAccount(password) {
   const myRemoteWallet = await retrieveDecryptedWallet(password);
   myRemoteWallet.add(web3.eth.accounts.create());
-  myWallet.value = [];
   await Promise.all([
     updateWallet(myRemoteWallet, password),
     retrieveEncryptedWallet(),
@@ -92,8 +117,8 @@ async function addPrivateKey(password) {
   const myRemoteWallet = await retrieveDecryptedWallet(password);
   console.log("my remote wallet: ", myRemoteWallet)
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value));
+
   console.log("my remote wallet aggiunto: ", myRemoteWallet)
-  myWallet.value = []
   newPrivateKey.value = ""
   await Promise.all([
     updateWallet(myRemoteWallet, password),
@@ -145,7 +170,6 @@ async function showPrivateKey(password) {
   cancelAllDialog()
 }
 
-// On mount, retrieve wallet data
 onMounted(async function () {
   await retrieveMyWallet();
 });
@@ -154,7 +178,7 @@ onMounted(async function () {
 <template>
   <VRow>
     <VCol>
-      <VCard title="I miei wallet">
+      <VCard title="Il mio wallet">
         <VTable>
           <thead>
           <tr>
@@ -173,8 +197,12 @@ onMounted(async function () {
           </tr>
           </thead>
           <tbody>
-          <tr v-for="item in myWallet" :key="item.address">
-            <td>{{ item.name }}</td>
+          <tr v-for="(item, index) in walletTable" :key="item.address">
+            <td>
+              <VTextField
+                v-model="accountNames[index]">
+              </VTextField>
+            </td>
             <td>{{ item.address }}</td>
             <td class="text-center">
               {{ item.balance }}
@@ -188,8 +216,11 @@ onMounted(async function () {
           </tr>
           </tbody>
         </VTable>
-        <VCol>
-          <VBtn type="createAccount" @click="askCreateAccount">
+        <VCol class="d-flex justify-end">
+          <VBtn @click="updateAccountNames">
+            Conferma modifica
+          </VBtn>
+          <VBtn type="createAccount" @click="askCreateAccount" class="ml-auto">
             Genera nuovo account
           </VBtn>
         </VCol>

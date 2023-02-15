@@ -1,9 +1,11 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
+import {userManager} from "@/plugins/oidc-settings";
+import axios from "axios";
 
 const accountData = {
   avatarImg: avatar1,
-  firstName: 'john',
+  firstName: 'Pippo',
   lastName: 'Doe',
   email: 'johnDoe@example.com',
   org: 'ThemeSelection',
@@ -16,10 +18,22 @@ const accountData = {
   timezone: '(GMT-11:00) International Date Line West',
   currency: 'USD',
 }
+
 const refInputEl = ref()
 const accountDataLocal = ref(structuredClone(accountData))
 const isAccountDeactivated = ref(false)
 const validateAccountDeactivation = [v => !!v || 'Please confirm account deactivation']
+
+userManager.signinSilent().then(
+  function (user) {
+    axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`;
+    accountDataLocal.value.firstName = user.profile.given_name
+    accountDataLocal.value.lastName = user.profile.family_name
+    accountDataLocal.value.email = user.profile.email
+  }
+)
+
+
 const resetForm = () => {
   accountDataLocal.value = structuredClone(accountData)
 }

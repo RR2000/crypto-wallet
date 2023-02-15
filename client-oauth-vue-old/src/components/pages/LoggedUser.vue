@@ -51,9 +51,6 @@ const gasLimit = 1000000; // Inserire qui il gas limit (aumentare il valore se n
 // Initialization begin
 const web3 = new Web3(new Web3.providers.HttpProvider(blockchainURL));
 const account = web3.eth.accounts.privateKeyToAccount(accountPrivateKey);
-// questo per avere sempre l'account alten
-web3.eth.accounts.wallet.add(account);
-console.log(await web3.eth.getBalance(account.address))
 
 
 const updateWallet = async (plainWallet, password) => {
