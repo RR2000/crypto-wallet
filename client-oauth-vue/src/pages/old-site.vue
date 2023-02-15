@@ -18,6 +18,21 @@ onMounted(async function () {
   await retriveBalance()
 })
 
+async function updateWallet(plainWallet, password) {
+  const encryptedWallet = plainWallet.encrypt(password);
+  const user = await userManager.signinSilent();
+  axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
+  const input = new FormData();
+  input.append("private_key", JSON.stringify(encryptedWallet));
+  try {
+    const response = await axios.post("http://127.0.0.1:9000/updateWallet", input);
+    console.log("Private key added:", response);
+  } catch (error) {
+    console.error("Error adding private key:", error);
+  }
+  await retriveCryptWallet()
+}
+
 function retriveBalance() {
   return Promise.all(myWallet.value.map(async wallet => {
     const balance = await web3.eth.getBalance(wallet["address"]);
@@ -31,14 +46,37 @@ async function retriveCryptWallet() {
   axios.defaults.headers.common["Authorization"] = `${user.token_type} ${user.access_token}`;
   console.log(JSON.parse(user.profile["private_keys"]))
   myWallet.value = JSON.parse(user.profile["private_keys"]);
+  await retriveBalance()
+  return JSON.parse(user.profile["private_keys"]);
 }
 
-function addPrivateKey() {
-  alert(`You typed: ${newPrivateKey}`);
+async function retriveDecryptedWallet(password){
+  const cryptWallet = await retriveCryptWallet();
+  const decryptedWallet = web3.eth.accounts.wallet.decrypt(cryptWallet, password)
+  return decryptedWallet
 }
 
-function createAccount() {
-  alert("wanna create")
+async function addPrivateKey(password) {
+  password = "pippo"
+  const myRemoteWallet = await retriveDecryptedWallet(password);
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey, true));
+
+  myWallet.value = []
+
+  await Promise.all([
+    updateWallet(myRemoteWallet, password)
+  ]);
+}
+async function createAccount(password) {
+  password = "pippo";
+  const myRemoteWallet = await retriveDecryptedWallet(password);
+  myRemoteWallet.add(web3.eth.accounts.create());
+
+  myWallet.value = []
+
+  await Promise.all([
+    updateWallet(myRemoteWallet, password)
+  ]);
 }
 
 </script>
