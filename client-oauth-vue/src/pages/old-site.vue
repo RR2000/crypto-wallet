@@ -1,98 +1,106 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import {ref, onMounted} from 'vue';
 import Web3 from 'web3';
-import { userManager } from '@/plugins/oidc-settings';
+import {userManager} from '@/plugins/oidc-settings';
 import axios from 'axios';
 
-const blockchainURL = 'http://localhost:8545';
+const andromedaURL = 'http://localhost:8545';
+const bscURL = 'https://bsc-dataseed1.binance.org:443'
 const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
-const web3 = new Web3(new Web3.providers.HttpProvider(blockchainURL));
-const account = web3.eth.accounts.privateKeyToAccount(accountPrivateKey);
+const web3 = new Web3(new Web3.providers.HttpProvider(bscURL));
 
 let newPrivateKey = '';
 const myWallet = ref([]);
 
-onMounted(async function() {
-  await retriveCryptWallet();
-});
 
+// Retrieve encrypted wallet
+async function retrieveEncryptedWallet() {
+  const user = await userManager.signinSilent();
+  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
+  const encryptedWallet = JSON.parse(user.profile.private_keys);
+  console.log("retrieveEncryptedWallet", encryptedWallet)
+  return encryptedWallet;
+}
+
+// Decrypt wallet using password
+async function retrieveDecryptedWallet(password) {
+  const encryptedWallet = await retrieveEncryptedWallet();
+  console.log("retrieveDecryptedWallet enc ", encryptedWallet)
+  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
+  console.log("retrieveDecryptedWallet dec ", decryptedWallet)
+  return decryptedWallet;
+}
+
+// Update wallet with new private key
 async function updateWallet(plainWallet, password) {
   const encryptedWallet = plainWallet.encrypt(password);
   const user = await userManager.signinSilent();
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
-  const input = new FormData();
-  input.append('private_key', JSON.stringify(encryptedWallet));
+  const formData = new FormData();
+  formData.append('private_key', JSON.stringify(encryptedWallet));
   try {
-    const response = await axios.post('http://127.0.0.1:9000/updateWallet', input);
+    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData);
     console.log('Private key added:', response);
   } catch (error) {
     console.error('Error adding private key:', error);
   }
-  await retriveCryptWallet();
+  await retrieveMyWallet();
 }
 
-async function retriveBalance() {
-  await Promise.all(myWallet.value.map(async wallet => {
+// Retrieve balance of each wallet in myWallet array
+async function retrieveWalletBalances() {
+  await Promise.all(myWallet.value.map(async (wallet) => {
     const balance = await web3.eth.getBalance(wallet.address);
     console.log(balance);
     wallet.balance = web3.utils.fromWei(balance, 'ether');
   }));
 }
 
-async function retriveCryptWallet() {
-  const user = await userManager.signinSilent();
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
-  console.log(JSON.parse(user.profile.private_keys));
-  myWallet.value = JSON.parse(user.profile.private_keys).map(wallet => ({
+// Retrieve encrypted wallet and map to myWallet array
+async function retrieveMyWallet() {
+  const encryptedWallet = await retrieveEncryptedWallet();
+  myWallet.value = encryptedWallet.map((wallet) => ({
     name: wallet.name,
     address: wallet.address,
-    privateKey: wallet.privateKey,
     balance: 0,
   }));
-  await retriveBalance();
-  return JSON.parse(user.profile.private_keys);
+  await retrieveWalletBalances();
 }
 
-async function retriveDecryptedWallet(password) {
-  const cryptWallet = await retriveCryptWallet();
-  const decryptedWallet = web3.eth.accounts.wallet.decrypt(cryptWallet, password);
-  return decryptedWallet;
-}
-
-async function addPrivateKey(password) {
+// Create a new account and update wallet
+async function createAccount(password) {
   password = 'pippo';
-  const myRemoteWallet = await retriveDecryptedWallet(password);
-  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey, true));
-
+  const myRemoteWallet = await retrieveDecryptedWallet(password);
+  myRemoteWallet.add(web3.eth.accounts.create());
   myWallet.value = [];
-
   await Promise.all([
     updateWallet(myRemoteWallet, password),
+    retrieveEncryptedWallet(),
+    retrieveWalletBalances()
   ]);
 }
 
-async function createAccount(password) {
+// Add a new private key to the wallet
+async function addPrivateKey(password, newPrivateKey) {
   password = 'pippo';
-  const myRemoteWallet = await retriveDecryptedWallet(password);
-  myRemoteWallet.add(web3.eth.accounts.create());
-
-  myWallet.value = []
-
-  await Promise.all([
-    updateWallet(myRemoteWallet, password),
-    retriveCryptWallet(),
-    retriveBalance()
-  ])
+  const myRemoteWallet = await retrieveDecryptedWallet(password);
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey, true));
+  myWallet.value = [];
+  await updateWallet(myRemoteWallet, password);
 }
 
-  async function showPrivateKey(walletAddress) {
+// Show private key for a given wallet address
+async function showPrivateKey(walletAddress) {
   const password = "pippo";
-  const myRemoteWallet = await retriveDecryptedWallet(password);
+  const myRemoteWallet = await retrieveDecryptedWallet(password);
   let privateKey = null;
-  for (const account of myRemoteWallet) {
-    if (account["address"] === walletAddress) {
-      privateKey = account["privateKey"]
+  for (let i = 0; i < myRemoteWallet.length; i++) {
+    alert(myRemoteWallet[i].address + " " + walletAddress)
+    if (web3.utils.toChecksumAddress(myRemoteWallet[i].address)
+      ===
+      web3.utils.toChecksumAddress(walletAddress)) {
+      privateKey = myRemoteWallet[i].privateKey
       break;
     }
   }
@@ -103,6 +111,10 @@ async function createAccount(password) {
   }
 }
 
+// On mount, retrieve wallet data
+onMounted(async function () {
+  await retrieveMyWallet();
+});
 
 </script>
 <template>
