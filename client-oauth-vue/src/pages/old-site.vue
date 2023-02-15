@@ -3,6 +3,7 @@ import {ref, onMounted} from 'vue';
 import Web3 from 'web3';
 import {userManager} from '@/plugins/oidc-settings';
 import axios from 'axios';
+import PasswordDialog from "@/views/oldSite/PasswordDialog.vue";
 
 const andromedaURL = 'http://localhost:8545';
 const bscURL = 'https://bsc-dataseed1.binance.org:443'
@@ -10,9 +11,11 @@ const accountPrivateKey = '0x000000000000000000000000000000000000000000000000000
 
 const web3 = new Web3(new Web3.providers.HttpProvider(bscURL));
 
-let newPrivateKey = '';
+let showPrivateKeyDialog = ref(false);
+let showCreateAccountDialog = ref(false);
+let newPrivateKey = ref('');
+let password = ref('');
 const myWallet = ref([]);
-
 
 // Retrieve encrypted wallet
 async function retrieveEncryptedWallet() {
@@ -24,17 +27,17 @@ async function retrieveEncryptedWallet() {
 }
 
 // Decrypt wallet using password
-async function retrieveDecryptedWallet(password) {
+async function retrieveDecryptedWallet() {
   const encryptedWallet = await retrieveEncryptedWallet();
   console.log("retrieveDecryptedWallet enc ", encryptedWallet)
-  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password);
+  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password.value);
   console.log("retrieveDecryptedWallet dec ", decryptedWallet)
   return decryptedWallet;
 }
 
 // Update wallet with new private key
-async function updateWallet(plainWallet, password) {
-  const encryptedWallet = plainWallet.encrypt(password);
+async function updateWallet(plainWallet) {
+  const encryptedWallet = plainWallet.encrypt(password.value);
   const user = await userManager.signinSilent();
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
   const formData = new FormData();
@@ -68,9 +71,12 @@ async function retrieveMyWallet() {
   await retrieveWalletBalances();
 }
 
+function askCreateAccount(){
+  showCreateAccountDialog.value = true;
+}
+
 // Create a new account and update wallet
 async function createAccount(password) {
-  password = 'pippo';
   const myRemoteWallet = await retrieveDecryptedWallet(password);
   myRemoteWallet.add(web3.eth.accounts.create());
   myWallet.value = [];
@@ -79,24 +85,42 @@ async function createAccount(password) {
     retrieveEncryptedWallet(),
     retrieveWalletBalances()
   ]);
+  cancelAllDialog()
 }
 
 // Add a new private key to the wallet
-async function addPrivateKey(password, newPrivateKey) {
-  password = 'pippo';
-  const myRemoteWallet = await retrieveDecryptedWallet(password);
-  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey, true));
-  myWallet.value = [];
-  await updateWallet(myRemoteWallet, password);
+async function addPrivateKey() {
+  const myRemoteWallet = await retrieveDecryptedWallet(password.value);
+  console.log("my remote wallet: ", myRemoteWallet)
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value));
+  console.log("my remote wallet aggiunto: ", myRemoteWallet)
+  myWallet.value = []
+  newPrivateKey.value = ""
+  await Promise.all([
+    updateWallet(myRemoteWallet, password.value),
+    retrieveEncryptedWallet(),
+    retrieveWalletBalances()
+  ]);
+}
+
+let walletAddress
+function askPrivateKey(clickedWallet) {
+  walletAddress = clickedWallet
+  showPrivateKeyDialog.value = true
+}
+
+function cancelAllDialog(){
+  walletAddress = ''
+  showPrivateKeyDialog.value = false
+  showCreateAccountDialog.value = false
 }
 
 // Show private key for a given wallet address
-async function showPrivateKey(walletAddress) {
-  const password = "pippo";
+async function showPrivateKey(password) {
   const myRemoteWallet = await retrieveDecryptedWallet(password);
+  password = ''
   let privateKey = null;
   for (let i = 0; i < myRemoteWallet.length; i++) {
-    alert(myRemoteWallet[i].address + " " + walletAddress)
     if (web3.utils.toChecksumAddress(myRemoteWallet[i].address)
       ===
       web3.utils.toChecksumAddress(walletAddress)) {
@@ -109,6 +133,7 @@ async function showPrivateKey(walletAddress) {
   } else {
     alert(`No private key found for wallet address ${walletAddress}`);
   }
+  cancelAllDialog()
 }
 
 // On mount, retrieve wallet data
@@ -147,7 +172,7 @@ onMounted(async function () {
             </td>
             <td class="text-center">
               <VBtn
-                @click="showPrivateKey(item.address)"
+                @click="askPrivateKey(item.address)"
                 icon="mdi-eye"
               ></VBtn>
             </td>
@@ -155,7 +180,7 @@ onMounted(async function () {
           </tbody>
         </VTable>
         <VCol>
-          <VBtn type="createAccount" @click="createAccount">
+          <VBtn type="createAccount" @click="askCreateAccount">
             Genera nuovo account
           </VBtn>
         </VCol>
@@ -186,4 +211,17 @@ onMounted(async function () {
       </VCard>
     </VCol>
   </VRow>
+  <password-dialog
+    v-model="showPrivateKeyDialog"
+    title="Sei sicuro di voler mostrare la chiave privata!?"
+    @confirm="showPrivateKey"
+    @cancel="cancelAllDialog"
+  />
+  <password-dialog
+    v-model="showCreateAccountDialog"
+    title="Inserisci la password per aggiungere un nuovo indirizzo"
+    @confirm="createAccount"
+    @cancel="cancelAllDialog"
+  />
 </template>
+
