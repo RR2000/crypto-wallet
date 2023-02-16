@@ -1,7 +1,7 @@
 <template>
   <VDialog
     v-model="dialog"
-    max-width="400"
+    max-width="40%"
   >
     <VCard>
       <VCardTitle>

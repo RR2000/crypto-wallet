@@ -15,10 +15,12 @@ const bscURL = 'https://bsc-dataseed1.binance.org:443'
 const web3 = new Web3(new Web3.providers.HttpProvider(bscURL))
 
 let showPrivateKeyDialog = ref(false)
+let showPrivateKeyPasswordDialog = ref(false)
 let showCreateAccountDialog = ref(false)
 let showImportPrivateKeyDialog = ref(false)
 let showImportMnemonicDialog = ref(false)
 let newPrivateKey = ref('')
+let privateKeyToShow = ref('')
 let mnemonicPhrase = ref('')
 let mnemonicIndex = ref(0)
 let walletTable = ref([])
@@ -193,35 +195,30 @@ let walletAddress
 
 function askPrivateKey(clickedWallet) {
   walletAddress = clickedWallet
-  showPrivateKeyDialog.value = true
+  showPrivateKeyPasswordDialog.value = true
 }
 
 function cancelAllDialog() {
   walletAddress = ''
   showImportMnemonicDialog.value = false
-  showPrivateKeyDialog.value = false
+  showPrivateKeyPasswordDialog.value = false
   showCreateAccountDialog.value = false
   showImportPrivateKeyDialog.value = false
 }
 
-// Show private key for a given wallet address
 async function showPrivateKey(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password)
-  let privateKey = null
+  const myRemoteWallet = await retrieveDecryptedWallet(password);
   for (let i = 0; i < myRemoteWallet.length; i++) {
-    if (web3.utils.toChecksumAddress(myRemoteWallet[i].address)
-      ===
-      web3.utils.toChecksumAddress(walletAddress)) {
-      privateKey = myRemoteWallet[i].privateKey
-      break
+    if (
+      web3.utils.toChecksumAddress(myRemoteWallet[i].address) ===
+      web3.utils.toChecksumAddress(walletAddress)
+    ) {
+      privateKeyToShow.value = myRemoteWallet[i].privateKey;
+      break;
     }
   }
-  if (privateKey) {
-    alert(`Private key: ${privateKey}`)
-  } else {
-    alert(`No private key found for wallet address ${walletAddress}`)
-  }
   cancelAllDialog()
+  showPrivateKeyDialog.value = true;
 }
 
 onMounted(async function () {
@@ -229,8 +226,8 @@ onMounted(async function () {
 })
 
 const numberRule = val => {
-  if(val < 0) return 'Please enter a positive number'
-  
+  if (val < 0) return 'Please enter a positive number'
+
   return true
 }
 </script>
@@ -241,42 +238,42 @@ const numberRule = val => {
       <VCard title="Il mio wallet">
         <VTable>
           <thead>
-            <tr>
-              <th class="text-uppercase">
-                Nome
-              </th>
-              <th class="text-uppercase">
-                Chiave pubblica
-              </th>
-              <th class="text-center text-uppercase">
-                Bilancio
-              </th>
-              <th class="text-center text-uppercase">
-                Mostra chiave privata
-              </th>
-            </tr>
+          <tr>
+            <th class="text-uppercase">
+              Nome
+            </th>
+            <th class="text-uppercase">
+              Chiave pubblica
+            </th>
+            <th class="text-center text-uppercase">
+              Bilancio
+            </th>
+            <th class="text-center text-uppercase">
+              Mostra chiave privata
+            </th>
+          </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(item, index) in walletTable"
-              :key="item.address"
-            >
-              <td>
-                <VTextField
-                  v-model="accountNames[index]"
-                />
-              </td>
-              <td>{{ item.address }}</td>
-              <td class="text-center">
-                {{ item.balance }}
-              </td>
-              <td class="text-center">
-                <VBtn
-                  icon="mdi-eye"
-                  @click="askPrivateKey(item.address)"
-                />
-              </td>
-            </tr>
+          <tr
+            v-for="(item, index) in walletTable"
+            :key="item.address"
+          >
+            <td>
+              <VTextField
+                v-model="accountNames[index]"
+              />
+            </td>
+            <td>{{ item.address }}</td>
+            <td class="text-center">
+              {{ item.balance }}
+            </td>
+            <td class="text-center">
+              <VBtn
+                icon="mdi-eye"
+                @click="askPrivateKey(item.address)"
+              />
+            </td>
+          </tr>
           </tbody>
         </VTable>
         <VCol class="d-flex justify-end">
@@ -339,6 +336,7 @@ const numberRule = val => {
               <VTextField
                 v-model="mnemonicIndex"
                 :rules="[numberRule]"
+                label="Numero dell'account"
                 type="positiveNumber"
               />
             </VCol>
@@ -358,7 +356,7 @@ const numberRule = val => {
     </VCol>
   </VRow>
   <PasswordDialog
-    v-model="showPrivateKeyDialog"
+    v-model="showPrivateKeyPasswordDialog"
     title="Sei sicuro di voler mostrare la chiave privata!?"
     @confirm="showPrivateKey"
     @cancel="cancelAllDialog"
@@ -381,5 +379,21 @@ const numberRule = val => {
     @confirm="addPrivateKeyFromMnemonic"
     @cancel="cancelAllDialog"
   />
+  <template>
+    <v-dialog v-model="showPrivateKeyDialog" persistent
+              max-width="50%">
+      <v-card>
+        <v-card-title>
+          <span class="headline">Private Key</span>
+        </v-card-title>
+        <v-card-text>
+          <span>{{ privateKeyToShow }}</span>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" text @click="showPrivateKeyDialog = false; privateKeyToShow=''">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </template>
 </template>
 

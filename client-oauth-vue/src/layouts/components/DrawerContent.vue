@@ -45,7 +45,7 @@ const upgradeBanner = computed(() => {
       :item="{
         title: 'Il mio wallet',
         to: 'my-wallet',
-        icon: { icon: 'wallet' }
+        icon: { icon: 'mdi-wallet-outline' }
       }"
     />
     <VerticalNavLink
