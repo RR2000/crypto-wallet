@@ -141,9 +141,7 @@ async function createAccount(password) {
 
 
 async function addPrivateKeyFromMnemonic(password) {
-  alert(mnemonicPhrase.value)
   const wallet = ethers.Wallet.fromPhrase(mnemonicPhrase.value)
-  alert(wallet)
   const hdPath = `m/44'/60'/0'/0/${mnemonicIndex.value}`
   const derivedWallet = wallet.derivePath(hdPath)
 
@@ -154,12 +152,12 @@ async function addPrivateKeyFromMnemonic(password) {
 
   console.log("my remote wallet aggiunto: ", myRemoteWallet)
   newPrivateKey.value = ""
+  cancelAllDialog()
   await Promise.all([
     updateWallet(myRemoteWallet, password),
     retrieveEncryptedWallet(),
     retrieveWalletBalances(),
   ])
-  cancelAllDialog()
 }
 
 // Add a new private key to the wallet
@@ -186,7 +184,7 @@ function askImportPrivateKey() {
   showImportPrivateKeyDialog.value = true
 }
 
-function askMnemonic(){
+function askMnemonic() {
   showImportMnemonicDialog.value = true;
 }
 
@@ -199,10 +197,10 @@ function askPrivateKey(clickedWallet) {
 
 function cancelAllDialog() {
   walletAddress = ''
+  showImportMnemonicDialog.value = false;
   showPrivateKeyDialog.value = false
   showCreateAccountDialog.value = false
   showImportPrivateKeyDialog.value = false
-  showImportMnemonicDialog.value = false;
 }
 
 // Show private key for a given wallet address
@@ -228,6 +226,11 @@ async function showPrivateKey(password) {
 onMounted(async function () {
   await retrieveMyWallet()
 })
+
+const numberRule = val => {
+  if(val < 0) return 'Please enter a positive number'
+  return true
+}
 </script>
 
 <template>
@@ -236,42 +239,42 @@ onMounted(async function () {
       <VCard title="Il mio wallet">
         <VTable>
           <thead>
-            <tr>
-              <th class="text-uppercase">
-                Nome
-              </th>
-              <th class="text-uppercase">
-                Chiave pubblica
-              </th>
-              <th class="text-center text-uppercase">
-                Bilancio
-              </th>
-              <th class="text-center text-uppercase">
-                Mostra chiave privata
-              </th>
-            </tr>
+          <tr>
+            <th class="text-uppercase">
+              Nome
+            </th>
+            <th class="text-uppercase">
+              Chiave pubblica
+            </th>
+            <th class="text-center text-uppercase">
+              Bilancio
+            </th>
+            <th class="text-center text-uppercase">
+              Mostra chiave privata
+            </th>
+          </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(item, index) in walletTable"
-              :key="item.address"
-            >
-              <td>
-                <VTextField
-                  v-model="accountNames[index]"
-                />
-              </td>
-              <td>{{ item.address }}</td>
-              <td class="text-center">
-                {{ item.balance }}
-              </td>
-              <td class="text-center">
-                <VBtn
-                  icon="mdi-eye"
-                  @click="askPrivateKey(item.address)"
-                />
-              </td>
-            </tr>
+          <tr
+            v-for="(item, index) in walletTable"
+            :key="item.address"
+          >
+            <td>
+              <VTextField
+                v-model="accountNames[index]"
+              />
+            </td>
+            <td>{{ item.address }}</td>
+            <td class="text-center">
+              {{ item.balance }}
+            </td>
+            <td class="text-center">
+              <VBtn
+                icon="mdi-eye"
+                @click="askPrivateKey(item.address)"
+              />
+            </td>
+          </tr>
           </tbody>
         </VTable>
         <VCol class="d-flex justify-end">
@@ -331,8 +334,17 @@ onMounted(async function () {
           </VRow>
           <VRow>
             <VCol>
+              <VTextField
+                v-model="mnemonicIndex"
+                :rules="[numberRule]"
+                type="positiveNumber"
+              />
+            </VCol>
+          </VRow>
+          <VRow>
+            <VCol>
               <VBtn
-                type="addPrivateKey"
+                type="addMnemonic"
                 @click="askMnemonic"
               >
                 Importa
