@@ -5,14 +5,18 @@ import {ref, onMounted} from 'vue'
 import Web3 from 'web3'
 import {userManager} from '@/plugins/oidc-settings'
 import axios from 'axios'
-import PasswordDialog from "@/views/oldSite/PasswordDialog.vue"
+import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
 
-//const andromedaURL = 'http://localhost:8545'
-const bscURL = 'https://bsc-dataseed1.binance.org:443'
+function chainUrl(arg){
+  if (arg === 0)
+    return 'http://localhost:8545'
+  else if(arg === 1)
+    return 'https://bsc-dataseed1.binance.org:443'
+}
 
 //const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
-const web3 = new Web3(new Web3.providers.HttpProvider(bscURL))
+const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
 
 let showPrivateKeyDialog = ref(false)
 let showPrivateKeyPasswordDialog = ref(false)
@@ -31,18 +35,22 @@ async function retrieveEncryptedWallet() {
     userManager.signinRedirect()
   })
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
-  let encryptedWallet = JSON.parse(user.profile.private_keys)[0]
-  console.log("hashed pwd", user.profile.password)
-  console.log("retrieveEncryptedWallet", encryptedWallet)
-
-  return encryptedWallet
+  
+  return JSON.parse(user.profile.private_keys)[0]
 }
 
 async function retrieveNames() {
   const user = await userManager.signinSilent()
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
+  let walletLenght = JSON.parse(user.profile.private_keys)[0].length
   let names = JSON.parse(user.profile.private_keys)[1]
-  console.log("retrieveNames", names)
+
+  for(let i = 0; i < walletLenght; i++){
+    if(names[i] == null || names[i].match(/^ *$/) !== null)
+      names[i] = ("Account " + (i + 1))
+  }
+
+  console.log("retrieveNames", names, walletLenght)
 
   return names
 }
@@ -56,13 +64,11 @@ function checkPassword(inputPassword, hash) {
 
 async function retrieveDecryptedWallet(password) {
   const encryptedWallet = await retrieveEncryptedWallet()
-  console.log("retrieveDecryptedWallet enc ", encryptedWallet)
 
   const user = await userManager.signinSilent()
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
   const passwordMatches = checkPassword(password, user.profile.password)
-  console.log('passwordMatches:', passwordMatches)
-  console.log('user.profile.password:', user.profile.password)
+
   if (!passwordMatches) {
     throw "La password non corrisponde con quella dell'account"
   }
@@ -111,6 +117,7 @@ async function retrieveWalletBalances() {
     const balance = await web3.eth.getBalance(wallet["address"])
     console.log(balance)
     wallet.balance = web3.utils.fromWei(balance, 'ether')
+    wallet.balance = parseFloat(wallet.balance).toFixed(15)
   }))
 }
 
@@ -200,6 +207,9 @@ function askPrivateKey(clickedWallet) {
 
 function cancelAllDialog() {
   walletAddress = ''
+  mnemonicPhrase.value = ''
+  newPrivateKey.value = ''
+  mnemonicIndex.value = 0
   showImportMnemonicDialog.value = false
   showPrivateKeyPasswordDialog.value = false
   showCreateAccountDialog.value = false
@@ -207,18 +217,18 @@ function cancelAllDialog() {
 }
 
 async function showPrivateKey(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password);
+  const myRemoteWallet = await retrieveDecryptedWallet(password)
   for (let i = 0; i < myRemoteWallet.length; i++) {
     if (
       web3.utils.toChecksumAddress(myRemoteWallet[i].address) ===
       web3.utils.toChecksumAddress(walletAddress)
     ) {
-      privateKeyToShow.value = myRemoteWallet[i].privateKey;
-      break;
+      privateKeyToShow.value = myRemoteWallet[i].privateKey
+      break
     }
   }
   cancelAllDialog()
-  showPrivateKeyDialog.value = true;
+  showPrivateKeyDialog.value = true
 }
 
 onMounted(async function () {
@@ -226,7 +236,13 @@ onMounted(async function () {
 })
 
 const numberRule = val => {
-  if (val < 0) return 'Please enter a positive number'
+  if (val === ''){
+    return 'Campo obbligatorio'
+  } else if (val < 0) {
+    return 'Il numero deve essere positivo!'
+  } else if (!Number.isInteger(val)) {
+    return 'Il numero deve essere intero!'
+  }
 
   return true
 }
@@ -238,42 +254,44 @@ const numberRule = val => {
       <VCard title="Il mio wallet">
         <VTable>
           <thead>
-          <tr>
-            <th class="text-uppercase">
-              Nome
-            </th>
-            <th class="text-uppercase">
-              Chiave pubblica
-            </th>
-            <th class="text-center text-uppercase">
-              Bilancio
-            </th>
-            <th class="text-center text-uppercase">
-              Mostra chiave privata
-            </th>
-          </tr>
+            <tr>
+              <th class="text-uppercase">
+                Nome
+              </th>
+              <th class="text-uppercase">
+                Chiave pubblica
+              </th>
+              <th class="text-center text-uppercase">
+                Bilancio
+              </th>
+              <th class="text-center text-uppercase">
+                Mostra chiave privata
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr
-            v-for="(item, index) in walletTable"
-            :key="item.address"
-          >
-            <td>
-              <VTextField
-                v-model="accountNames[index]"
-              />
-            </td>
-            <td>{{ item.address }}</td>
-            <td class="text-center">
-              {{ item.balance }}
-            </td>
-            <td class="text-center">
-              <VBtn
-                icon="mdi-eye"
-                @click="askPrivateKey(item.address)"
-              />
-            </td>
-          </tr>
+            <tr
+              v-for="(item, index) in walletTable"
+              :key="item.address"
+            >
+              <td>
+                <VTextField
+                  v-model="accountNames[index]"
+                />
+              </td>
+              <td style="font-family: monospace; font-size: 1em">
+                {{ "0x" + item.address.toUpperCase() }}
+              </td>
+              <td class="text-center">
+                {{ item.balance }}
+              </td>
+              <td class="text-center">
+                <VBtn
+                  icon="mdi-eye"
+                  @click="askPrivateKey(item.address)"
+                />
+              </td>
+            </tr>
           </tbody>
         </VTable>
         <VCol class="d-flex justify-end">
@@ -337,7 +355,7 @@ const numberRule = val => {
                 v-model="mnemonicIndex"
                 :rules="[numberRule]"
                 label="Numero dell'account"
-                type="positiveNumber"
+                type="number"
               />
             </VCol>
           </VRow>
@@ -380,20 +398,29 @@ const numberRule = val => {
     @cancel="cancelAllDialog"
   />
   <template>
-    <v-dialog v-model="showPrivateKeyDialog" persistent
-              max-width="50%">
-      <v-card>
-        <v-card-title>
+    <VDialog
+      v-model="showPrivateKeyDialog"
+      persistent
+      max-width="50%"
+    >
+      <VCard>
+        <VCardTitle>
           <span class="headline">Private Key</span>
-        </v-card-title>
-        <v-card-text>
+        </VCardTitle>
+        <VCardText>
           <span>{{ privateKeyToShow }}</span>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn color="primary" text @click="showPrivateKeyDialog = false; privateKeyToShow=''">Close</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        </VCardText>
+        <VCardActions>
+          <VBtn
+            color="primary"
+            text
+            @click="showPrivateKeyDialog = false; privateKeyToShow=''"
+          >
+            Close
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </template>
 </template>
 

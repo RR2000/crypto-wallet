@@ -1,5 +1,26 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
+import {userManager} from "@/plugins/oidc-settings";
+import axios from "axios";
+
+let accountDataLocal = ref('')
+
+userManager.signinSilent().then(
+  function (user) {
+    axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
+
+    accountDataLocal.value = {
+      avatarImg: avatar1,
+      name: user.profile.name,
+      firstName: user.profile.given_name,
+      lastName: user.profile.family_name,
+      email: user.profile.email,
+      phone: user.profile.phone_number,
+      address: user.profile.address,
+
+    }
+  },
+)
 
 const avatarBadgeProps = {
   dot: true,
@@ -45,7 +66,7 @@ const avatarBadgeProps = {
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              John Doe
+              {{accountDataLocal.name}}
             </VListItemTitle>
             <VListItemSubtitle class="text-disabled">
               Admin
