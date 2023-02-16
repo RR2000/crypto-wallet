@@ -41,17 +41,16 @@ const upgradeBanner = computed(() => {
         icon: { icon: 'mdi-home-outline' }
       }"
     />
-
     <VerticalNavLink
       :item="{
-        title: 'Old Website',
-        to: 'old-site',
-        icon: { icon: 'mdi-home-outline' }
+        title: 'Il mio wallet',
+        to: 'my-wallet',
+        icon: { icon: 'wallet' }
       }"
     />
     <VerticalNavLink
       :item="{
-        title: 'Account Settings',
+        title: 'Impostazioni Account',
         to: 'account-settings',
         icon: { icon: 'mdi-account-cog-outline' }
       }"

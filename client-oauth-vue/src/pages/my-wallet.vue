@@ -9,6 +9,7 @@ import PasswordDialog from "@/views/oldSite/PasswordDialog.vue"
 
 //const andromedaURL = 'http://localhost:8545'
 const bscURL = 'https://bsc-dataseed1.binance.org:443'
+
 //const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
 const web3 = new Web3(new Web3.providers.HttpProvider(bscURL))
@@ -119,7 +120,7 @@ async function retrieveMyWallet() {
 
   console.log("names", accountNames.value)
 
-  walletTable.value = encryptedWallet.map((wallet) => ({
+  walletTable.value = encryptedWallet.map(wallet => ({
     address: wallet.address,
     balance: wallet.balance,
   }))
@@ -185,7 +186,7 @@ function askImportPrivateKey() {
 }
 
 function askMnemonic() {
-  showImportMnemonicDialog.value = true;
+  showImportMnemonicDialog.value = true
 }
 
 let walletAddress
@@ -197,7 +198,7 @@ function askPrivateKey(clickedWallet) {
 
 function cancelAllDialog() {
   walletAddress = ''
-  showImportMnemonicDialog.value = false;
+  showImportMnemonicDialog.value = false
   showPrivateKeyDialog.value = false
   showCreateAccountDialog.value = false
   showImportPrivateKeyDialog.value = false
@@ -229,6 +230,7 @@ onMounted(async function () {
 
 const numberRule = val => {
   if(val < 0) return 'Please enter a positive number'
+  
   return true
 }
 </script>
@@ -239,42 +241,42 @@ const numberRule = val => {
       <VCard title="Il mio wallet">
         <VTable>
           <thead>
-          <tr>
-            <th class="text-uppercase">
-              Nome
-            </th>
-            <th class="text-uppercase">
-              Chiave pubblica
-            </th>
-            <th class="text-center text-uppercase">
-              Bilancio
-            </th>
-            <th class="text-center text-uppercase">
-              Mostra chiave privata
-            </th>
-          </tr>
+            <tr>
+              <th class="text-uppercase">
+                Nome
+              </th>
+              <th class="text-uppercase">
+                Chiave pubblica
+              </th>
+              <th class="text-center text-uppercase">
+                Bilancio
+              </th>
+              <th class="text-center text-uppercase">
+                Mostra chiave privata
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr
-            v-for="(item, index) in walletTable"
-            :key="item.address"
-          >
-            <td>
-              <VTextField
-                v-model="accountNames[index]"
-              />
-            </td>
-            <td>{{ item.address }}</td>
-            <td class="text-center">
-              {{ item.balance }}
-            </td>
-            <td class="text-center">
-              <VBtn
-                icon="mdi-eye"
-                @click="askPrivateKey(item.address)"
-              />
-            </td>
-          </tr>
+            <tr
+              v-for="(item, index) in walletTable"
+              :key="item.address"
+            >
+              <td>
+                <VTextField
+                  v-model="accountNames[index]"
+                />
+              </td>
+              <td>{{ item.address }}</td>
+              <td class="text-center">
+                {{ item.balance }}
+              </td>
+              <td class="text-center">
+                <VBtn
+                  icon="mdi-eye"
+                  @click="askPrivateKey(item.address)"
+                />
+              </td>
+            </tr>
           </tbody>
         </VTable>
         <VCol class="d-flex justify-end">

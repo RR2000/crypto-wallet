@@ -9,6 +9,5 @@ userManager.signinCallback().then(
   },
 )
 </script>
-<template>
 
-</template>
+<template />

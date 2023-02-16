@@ -20,7 +20,7 @@
     "bcryptjs": "^2.4.3",
     "chart.js": "^3.9.1",
     "eslint-import-resolver-alias": "^1.1.2",
-    "ethers": "^6.0.3",
+    "ethers": "^6.0.4",
     "jwt-decode": "^3.1.2",
     "oidc-client-ts": "2.2.1",
     "pinia": "^2.0.22",
@@ -36,7 +36,7 @@
     "vue3-apexcharts": "^1.4.1",
     "vue3-perfect-scrollbar": "^1.6.0",
     "vuetify": "3.0.0-beta.11",
-    "web3": "1.8.1",
+    "web3": "^1.8.2",
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
