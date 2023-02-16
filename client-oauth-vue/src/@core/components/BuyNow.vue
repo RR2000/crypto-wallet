@@ -1,6 +1,4 @@
-<template>
-
-</template>
+<template />
 
 <style lang="scss" scoped>
 .product-buy-now {

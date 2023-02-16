@@ -1,7 +1,7 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import {userManager} from "@/plugins/oidc-settings";
-import axios from "axios";
+import {userManager} from "@/plugins/oidc-settings"
+import axios from "axios"
 
 const accountData = {
   avatarImg: avatar1,
@@ -26,11 +26,11 @@ const validateAccountDeactivation = [v => !!v || 'Please confirm account deactiv
 
 userManager.signinSilent().then(
   function (user) {
-    axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`;
+    axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
     accountDataLocal.value.firstName = user.profile.given_name
     accountDataLocal.value.lastName = user.profile.family_name
     accountDataLocal.value.email = user.profile.email
-  }
+  },
 )
 
 

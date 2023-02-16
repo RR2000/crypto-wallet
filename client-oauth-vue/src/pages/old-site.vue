@@ -1,139 +1,193 @@
 <script setup>
-import {ref, onMounted} from 'vue';
-import Web3 from 'web3';
-import {userManager} from '@/plugins/oidc-settings';
-import axios from 'axios';
-import PasswordDialog from "@/views/oldSite/PasswordDialog.vue";
+import {ethers} from 'ethers'
+import bcrypt from 'bcryptjs'
+import {ref, onMounted} from 'vue'
+import Web3 from 'web3'
+import {userManager} from '@/plugins/oidc-settings'
+import axios from 'axios'
+import PasswordDialog from "@/views/oldSite/PasswordDialog.vue"
 
-const andromedaURL = 'http://localhost:8545';
+//const andromedaURL = 'http://localhost:8545'
 const bscURL = 'https://bsc-dataseed1.binance.org:443'
-const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000';
+//const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
-const web3 = new Web3(new Web3.providers.HttpProvider(bscURL));
+const web3 = new Web3(new Web3.providers.HttpProvider(bscURL))
 
-let showPrivateKeyDialog = ref(false);
-let showCreateAccountDialog = ref(false);
-let showImportPrivateKeyDialog = ref(false);
-let newPrivateKey = ref('');
-let password = ref('');
-let walletTable = ref([]);
-let accountNames = ref([]);
+let showPrivateKeyDialog = ref(false)
+let showCreateAccountDialog = ref(false)
+let showImportPrivateKeyDialog = ref(false)
+let showImportMnemonicDialog = ref(false)
+let newPrivateKey = ref('')
+let mnemonicPhrase = ref('')
+let mnemonicIndex = ref(0)
+let walletTable = ref([])
+let accountNames = ref([])
 
 async function retrieveEncryptedWallet() {
-  const user = await userManager.signinSilent();
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
+  const user = await userManager.signinSilent().catch(function () {
+    userManager.signinRedirect()
+  })
+  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
   let encryptedWallet = JSON.parse(user.profile.private_keys)[0]
+  console.log("hashed pwd", user.profile.password)
   console.log("retrieveEncryptedWallet", encryptedWallet)
-  return encryptedWallet;
+
+  return encryptedWallet
 }
 
 async function retrieveNames() {
-  const user = await userManager.signinSilent();
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
+  const user = await userManager.signinSilent()
+  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
   let names = JSON.parse(user.profile.private_keys)[1]
   console.log("retrieveNames", names)
-  return names;
+
+  return names
 }
 
-async function retrieveDecryptedWallet() {
-  const encryptedWallet = await retrieveEncryptedWallet();
+function checkPassword(inputPassword, hash) {
+  console.log('inputPassword:', inputPassword)
+  console.log('hash:', hash)
+
+  return bcrypt.compareSync(inputPassword, hash)
+}
+
+async function retrieveDecryptedWallet(password) {
+  const encryptedWallet = await retrieveEncryptedWallet()
   console.log("retrieveDecryptedWallet enc ", encryptedWallet)
-  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password.value);
+
+  const user = await userManager.signinSilent()
+  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
+  const passwordMatches = checkPassword(password, user.profile.password)
+  console.log('passwordMatches:', passwordMatches)
+  console.log('user.profile.password:', user.profile.password)
+  if (!passwordMatches) {
+    throw "La password non corrisponde con quella dell'account"
+  }
+
+  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password)
   console.log("retrieveDecryptedWallet dec ", decryptedWallet)
-  return decryptedWallet;
+
+  return decryptedWallet
 }
 
 async function updateAccountNames() {
   let encryptedWallet = await retrieveEncryptedWallet()
 
-  const formData = new FormData();
-  formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]));
-  try {
-    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData);
-    console.log('Private key added:', response);
-  } catch (error) {
-    console.error('Error adding private key:', error);
-  }
-  await retrieveMyWallet();
-  await retrieveNames();
-}
-
-async function updateWallet(plainWallet) {
-  let encryptedWallet = plainWallet.encrypt(password.value);
-
-  const user = await userManager.signinSilent();
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`;
-
-  const formData = new FormData();
+  const formData = new FormData()
   formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
   try {
-    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData);
-    console.log('Private key added:', response);
+    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
+    console.log('Private key added:', response)
   } catch (error) {
-    console.error('Error adding private key:', error);
+    console.error('Error adding private key:', error)
   }
-  await retrieveMyWallet();
+  await retrieveMyWallet()
+  await retrieveNames()
+}
+
+async function updateWallet(plainWallet, password) {
+  let encryptedWallet = plainWallet.encrypt(password)
+
+  const user = await userManager.signinSilent()
+  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
+
+  const formData = new FormData()
+  formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
+  try {
+    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
+    console.log('Private key added:', response)
+  } catch (error) {
+    console.error('Error adding private key:', error)
+  }
+  await retrieveMyWallet()
 }
 
 // Retrieve balance of each wallet in walletTable array
 async function retrieveWalletBalances() {
-  await Promise.all(walletTable.value.map(async (wallet) => {
-    const balance = await web3.eth.getBalance(wallet.address);
-    console.log(balance);
-    wallet.balance = web3.utils.fromWei(balance, 'ether');
-  }));
+  await Promise.all(walletTable.value.map(async wallet => {
+    const balance = await web3.eth.getBalance(wallet["address"])
+    console.log(balance)
+    wallet.balance = web3.utils.fromWei(balance, 'ether')
+  }))
 }
 
 
 async function retrieveMyWallet() {
-  const encryptedWallet = await retrieveEncryptedWallet();
+  const encryptedWallet = await retrieveEncryptedWallet()
   accountNames.value = await retrieveNames()
   walletTable.value = []
 
   console.log("names", accountNames.value)
 
-  walletTable.value = encryptedWallet.map((wallet, i) => ({
+  walletTable.value = encryptedWallet.map((wallet) => ({
     address: wallet.address,
     balance: wallet.balance,
-  }));
-  await retrieveWalletBalances();
+  }))
+  await retrieveWalletBalances()
 }
 
 
 // Create a new account and update wallet
 async function createAccount(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password);
-  myRemoteWallet.add(web3.eth.accounts.create());
+  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  myRemoteWallet.add(web3.eth.accounts.create())
   await Promise.all([
     updateWallet(myRemoteWallet, password),
     retrieveEncryptedWallet(),
-    retrieveWalletBalances()
-  ]);
+    retrieveWalletBalances(),
+  ])
   cancelAllDialog()
 }
 
-// Add a new private key to the wallet
-async function addPrivateKey(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password);
-  console.log("my remote wallet: ", myRemoteWallet)
-  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value));
+
+async function addPrivateKeyFromMnemonic(password) {
+  alert(mnemonicPhrase.value)
+  const wallet = ethers.Wallet.fromPhrase(mnemonicPhrase.value)
+  alert(wallet)
+  const hdPath = `m/44'/60'/0'/0/${mnemonicIndex.value}`
+  const derivedWallet = wallet.derivePath(hdPath)
+
+  console.log("derivedWallet", derivedWallet)
+
+  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(derivedWallet.privateKey))
 
   console.log("my remote wallet aggiunto: ", myRemoteWallet)
   newPrivateKey.value = ""
   await Promise.all([
     updateWallet(myRemoteWallet, password),
     retrieveEncryptedWallet(),
-    retrieveWalletBalances()
-  ]);
+    retrieveWalletBalances(),
+  ])
+  cancelAllDialog()
+}
+
+// Add a new private key to the wallet
+async function addPrivateKey(password) {
+  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  console.log("my remote wallet: ", myRemoteWallet)
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
+
+  console.log("my remote wallet aggiunto: ", myRemoteWallet)
+  newPrivateKey.value = ""
+  await Promise.all([
+    updateWallet(myRemoteWallet, password),
+    retrieveEncryptedWallet(),
+    retrieveWalletBalances(),
+  ])
   cancelAllDialog()
 }
 
 function askCreateAccount() {
-  showCreateAccountDialog.value = true;
+  showCreateAccountDialog.value = true
 }
 
 function askImportPrivateKey() {
   showImportPrivateKeyDialog.value = true
+}
+
+function askMnemonic(){
+  showImportMnemonicDialog.value = true;
 }
 
 let walletAddress
@@ -148,79 +202,87 @@ function cancelAllDialog() {
   showPrivateKeyDialog.value = false
   showCreateAccountDialog.value = false
   showImportPrivateKeyDialog.value = false
+  showImportMnemonicDialog.value = false;
 }
 
 // Show private key for a given wallet address
 async function showPrivateKey(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password);
-  let privateKey = null;
+  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  let privateKey = null
   for (let i = 0; i < myRemoteWallet.length; i++) {
     if (web3.utils.toChecksumAddress(myRemoteWallet[i].address)
       ===
       web3.utils.toChecksumAddress(walletAddress)) {
       privateKey = myRemoteWallet[i].privateKey
-      break;
+      break
     }
   }
   if (privateKey) {
-    alert(`Private key: ${privateKey}`);
+    alert(`Private key: ${privateKey}`)
   } else {
-    alert(`No private key found for wallet address ${walletAddress}`);
+    alert(`No private key found for wallet address ${walletAddress}`)
   }
   cancelAllDialog()
 }
 
 onMounted(async function () {
-  await retrieveMyWallet();
-});
-
+  await retrieveMyWallet()
+})
 </script>
+
 <template>
   <VRow>
     <VCol>
       <VCard title="Il mio wallet">
         <VTable>
           <thead>
-          <tr>
-            <th class="text-uppercase">
-              Nome
-            </th>
-            <th class="text-uppercase">
-              Chiave pubblica
-            </th>
-            <th class="text-center text-uppercase">
-              Bilancio
-            </th>
-            <th class="text-center text-uppercase">
-              Mostra chiave privata
-            </th>
-          </tr>
+            <tr>
+              <th class="text-uppercase">
+                Nome
+              </th>
+              <th class="text-uppercase">
+                Chiave pubblica
+              </th>
+              <th class="text-center text-uppercase">
+                Bilancio
+              </th>
+              <th class="text-center text-uppercase">
+                Mostra chiave privata
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="(item, index) in walletTable" :key="item.address">
-            <td>
-              <VTextField
-                v-model="accountNames[index]">
-              </VTextField>
-            </td>
-            <td>{{ item.address }}</td>
-            <td class="text-center">
-              {{ item.balance }}
-            </td>
-            <td class="text-center">
-              <VBtn
-                @click="askPrivateKey(item.address)"
-                icon="mdi-eye"
-              ></VBtn>
-            </td>
-          </tr>
+            <tr
+              v-for="(item, index) in walletTable"
+              :key="item.address"
+            >
+              <td>
+                <VTextField
+                  v-model="accountNames[index]"
+                />
+              </td>
+              <td>{{ item.address }}</td>
+              <td class="text-center">
+                {{ item.balance }}
+              </td>
+              <td class="text-center">
+                <VBtn
+                  icon="mdi-eye"
+                  @click="askPrivateKey(item.address)"
+                />
+              </td>
+            </tr>
           </tbody>
         </VTable>
         <VCol class="d-flex justify-end">
           <VBtn @click="updateAccountNames">
             Conferma modifica
           </VBtn>
-          <VBtn type="createAccount" @click="askCreateAccount" class="ml-auto">
+          <VBtn
+            type="createAccount"
+            class="ml-auto"
+            @click="askCreateAccount"
+          >
             Genera nuovo account
           </VBtn>
         </VCol>
@@ -242,7 +304,10 @@ onMounted(async function () {
           </VRow>
           <VRow>
             <VCol>
-              <VBtn type="addPrivateKey" @click="askImportPrivateKey">
+              <VBtn
+                type="addPrivateKey"
+                @click="askImportPrivateKey"
+              >
                 Importa
               </VBtn>
             </VCol>
@@ -251,22 +316,55 @@ onMounted(async function () {
       </VCard>
     </VCol>
   </VRow>
-  <password-dialog
+  <VRow>
+    <VCol pa="6">
+      <VCard title="Importa da frase mnemonica">
+        <VCardText>
+          <VRow>
+            <VCol>
+              <VTextField
+                v-model="mnemonicPhrase"
+                label="Chiave mnemonica"
+                placeholder="soda pledge remain avocado hurdle sword invest orphan soda hawk cannon balance"
+              />
+            </VCol>
+          </VRow>
+          <VRow>
+            <VCol>
+              <VBtn
+                type="addPrivateKey"
+                @click="askMnemonic"
+              >
+                Importa
+              </VBtn>
+            </VCol>
+          </VRow>
+        </VCardText>
+      </VCard>
+    </VCol>
+  </VRow>
+  <PasswordDialog
     v-model="showPrivateKeyDialog"
     title="Sei sicuro di voler mostrare la chiave privata!?"
     @confirm="showPrivateKey"
     @cancel="cancelAllDialog"
   />
-  <password-dialog
+  <PasswordDialog
     v-model="showCreateAccountDialog"
     title="Inserisci la password per aggiungere un nuovo indirizzo"
     @confirm="createAccount"
     @cancel="cancelAllDialog"
   />
-  <password-dialog
+  <PasswordDialog
     v-model="showImportPrivateKeyDialog"
     title="Inserisci la password per aggiungere un nuovo indirizzo"
     @confirm="addPrivateKey"
+    @cancel="cancelAllDialog"
+  />
+  <PasswordDialog
+    v-model="showImportMnemonicDialog"
+    title="Inserisci la password per aggiungere un nuovo indirizzo"
+    @confirm="addPrivateKeyFromMnemonic"
     @cancel="cancelAllDialog"
   />
 </template>

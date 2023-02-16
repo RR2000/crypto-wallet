@@ -5,7 +5,7 @@ import authV1MaskDark from '@/assets/images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@/assets/images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@/assets/images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@/assets/images/pages/auth-v1-tree.png'
-import {userManager} from "@/plugins/oidc-settings";
+import {userManager} from "@/plugins/oidc-settings"
 
 const vuetifyTheme = useTheme()
 const authThemeMask = computed(() => {
@@ -14,13 +14,11 @@ const authThemeMask = computed(() => {
 
 const performLogin = async () => {
   try {
-    await userManager.signinRedirect();
+    await userManager.signinRedirect()
   } catch (error) {
-    console.error("Error during sign-in:", error);
+    console.error("Error during sign-in:", error)
   }
 }
-
-
 </script>
 
 <template>
@@ -55,8 +53,10 @@ const performLogin = async () => {
           <VRow>
             <VCol>
               <!-- login button -->
-              <VBtn block="true"
-                    type="submit">
+              <VBtn
+                block="true"
+                type="submit"
+              >
                 Login
               </VBtn>
             </VCol>

@@ -18,10 +18,12 @@ public class CryptoUserOidc extends OidcUserInfo {
     OidcUserInfo.Builder builder = OidcUserInfo.builder().subject(db.getEmail());
     if (!scopes.isEmpty()) {
       if (scopes.contains(OidcScopes.PROFILE)) {
-        builder.name(db.getFirstName() + " " + db.getLastName())
+        builder
+            .name(db.getFirstName() + " " + db.getLastName())
             .givenName(db.getFirstName())
             .familyName(db.getLastName())
-            .updatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            .updatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE))
+            .claim("password", db.getPassword());
       }
       if (scopes.contains(OidcScopes.EMAIL)) {
         builder.email(db.getEmail()).emailVerified(false);

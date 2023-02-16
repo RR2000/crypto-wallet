@@ -1,22 +1,36 @@
 <template>
-  <v-dialog v-model="dialog" max-width="400">
-    <v-card>
-      <v-card-title>
+  <VDialog
+    v-model="dialog"
+    max-width="400"
+  >
+    <VCard>
+      <VCardTitle>
         {{ title }}
-      </v-card-title>
-      <v-card-text>
-        <v-text-field v-model="password" label="Password" type="password"></v-text-field>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn color="primary" @click="confirm" :disabled="!password">
+      </VCardTitle>
+      <VCardText>
+        <VTextField
+          v-model="password"
+          label="Password"
+          type="password"
+        />
+      </VCardText>
+      <VCardActions>
+        <VBtn
+          color="primary"
+          :disabled="!password"
+          @click="confirm"
+        >
           Conferma
-        </v-btn>
-        <v-btn color="red" @click="cancel">
+        </VBtn>
+        <VBtn
+          color="red"
+          @click="cancel"
+        >
           Annulla
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <script>
@@ -31,19 +45,19 @@ export default {
     return {
       dialog: false,
       password: '',
-    };
+    }
   },
   methods: {
     confirm() {
-      this.dialog = false;
-      this.$emit('confirm', this.password);
+      this.dialog = false
+      this.$emit('confirm', this.password)
       this.password = ''
     },
     cancel() {
-      this.dialog = false;
-      this.$emit('cancel');
+      this.dialog = false
+      this.$emit('cancel')
       this.password = ''
     },
   },
-};
+}
 </script>
