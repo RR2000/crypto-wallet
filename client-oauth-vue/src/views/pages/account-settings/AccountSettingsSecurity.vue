@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios'
-import bcrypt from "bcryptjs";
-import {userManager} from "@/plugins/oidc-settings";
+import bcrypt from "bcryptjs"
+import {userManagerSingleton} from "@/plugins/user-manager"
 
 const isCurrentPasswordVisible = ref(false)
 const isNewPasswordVisible = ref(false)
@@ -14,16 +14,17 @@ function passwordsAreEquals(inputPassword, hash) {
   return bcrypt.compareSync(inputPassword, hash)
 }
 
+//TODO cambiare anche quella del wallets
 async function changePassword() {
   if (newPassword.value !== confirmPassword.value) {
     alert('New password and confirm password do not match.')
     return
   }
 
-  const user = await userManager.signinSilent()
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
-  if(!passwordsAreEquals(currentPassword.value, user.profile.password)){
+  const user = await userManagerSingleton.getUserInfo()
+  if(!passwordsAreEquals(currentPassword.value, user.password)){
     alert('Wrong password.')
+    
     return
   }
 
@@ -42,7 +43,6 @@ async function changePassword() {
     alert(`Error changing password: ${error.response.data.message}`)
   }
 }
-
 </script>
 
 <template>

@@ -3,9 +3,9 @@ import {ethers} from 'ethers'
 import bcrypt from 'bcryptjs'
 import {ref, onMounted} from 'vue'
 import Web3 from 'web3'
-import {userManager} from '@/plugins/oidc-settings'
 import axios from 'axios'
 import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
+import {userManagerSingleton} from "@/plugins/user-manager";
 
 function chainUrl(arg){
   if (arg === 0)
@@ -31,23 +31,19 @@ let walletTable = ref([])
 let accountNames = ref([])
 
 async function retrieveEncryptedWallet() {
-  const user = await userManager.signinSilent()
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
-  
-  return JSON.parse(user.profile.private_keys)[0]
+  await userManagerSingleton.refresh();
+  const user = await userManagerSingleton.getUserInfo()
+  return JSON.parse(user.private_keys)[0]
 }
 
 async function retrieveNames() {
-  const user = await userManager.signinSilent()
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
-  let walletLenght = JSON.parse(user.profile.private_keys)[0].length
-  let names = JSON.parse(user.profile.private_keys)[1]
-
+  const user = await userManagerSingleton.getUserInfo()
+  let walletLenght = JSON.parse(user.private_keys)[0].length
+  let names = JSON.parse(user.private_keys)[1]
   for(let i = 0; i < walletLenght; i++){
     if(names[i] == null || names[i].match(/^ *$/) !== null)
       names[i] = ("Account " + (i + 1))
   }
-
   console.log("retrieveNames", names, walletLenght)
 
   return names
@@ -59,15 +55,12 @@ function checkPassword(inputPassword, hash) {
 
 async function retrieveDecryptedWallet(password) {
   const encryptedWallet = await retrieveEncryptedWallet()
+  const user = await userManagerSingleton.getUserInfo()
 
-  const user = await userManager.signinSilent()
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
-  const passwordMatches = checkPassword(password, user.profile.password)
-
+  const passwordMatches = checkPassword(password, user.password)
   if (!passwordMatches) {
     throw "La password non corrisponde con quella dell'account"
   }
-
   const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password)
   console.log("retrieveDecryptedWallet dec ", decryptedWallet)
 
@@ -91,9 +84,6 @@ async function updateAccountNames() {
 
 async function updateWallet(plainWallet, password) {
   let encryptedWallet = plainWallet.encrypt(password)
-
-  const user = await userManager.signinSilent()
-  axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
 
   const formData = new FormData()
   formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
