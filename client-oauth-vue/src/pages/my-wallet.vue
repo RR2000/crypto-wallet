@@ -31,9 +31,7 @@ let walletTable = ref([])
 let accountNames = ref([])
 
 async function retrieveEncryptedWallet() {
-  const user = await userManager.signinSilent().catch(function () {
-    userManager.signinRedirect()
-  })
+  const user = await userManager.signinSilent()
   axios.defaults.headers.common.Authorization = `${user.token_type} ${user.access_token}`
   
   return JSON.parse(user.profile.private_keys)[0]
@@ -56,9 +54,6 @@ async function retrieveNames() {
 }
 
 function checkPassword(inputPassword, hash) {
-  console.log('inputPassword:', inputPassword)
-  console.log('hash:', hash)
-
   return bcrypt.compareSync(inputPassword, hash)
 }
 

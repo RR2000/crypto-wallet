@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.stereotype.Service;
 
@@ -46,9 +47,16 @@ public class CryptoUserDetailsService implements UserDetailsService {
   }
 
   @Transactional
-  public void updateCryptoUser(String username, String wallet) {
+  public void updateCryptoUserWallet(String username, String wallet) {
     CryptoUserDatabase user = userRepository.findByEmail(username);
     user.setWallet(wallet);
+    userRepository.save(user);
+  }
+
+  @Transactional
+  public void updateCryptoUserPassword(String username, String newEncodedPassword) {
+    CryptoUserDatabase user = userRepository.findByEmail(username);
+    user.setPassword(newEncodedPassword);
     userRepository.save(user);
   }
 }

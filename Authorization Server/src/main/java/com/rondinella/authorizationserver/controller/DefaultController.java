@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -60,18 +61,34 @@ public class DefaultController {
     return "login";
   }
 
+  private String extractUsername(HttpServletRequest request) {
+    String barer = request.getHeader("Authorization");
+    String token = barer.split("Bearer ")[1];
+    Jwt jwt = jwtDecoder.decode(token);
+    Map<String, Object> claims = jwt.getClaims();
+    return claims.get("sub").toString();
+  }
+
   @PostMapping("/updateWallet")
   public ResponseEntity<String> addPrivateKey(Model model,
                                               @RequestParam String private_key,
                                               HttpServletRequest request) {
 
-    String barer = request.getHeader("Authorization");
-    String token = barer.split("Bearer ")[1];
-    Jwt jwt = jwtDecoder.decode(token);
-    Map<String, Object> claims = jwt.getClaims();
-    String username = claims.get("sub").toString();
-    service.updateCryptoUser(username, private_key);
-
+    String username = extractUsername(request);
+    service.updateCryptoUserWallet(username, private_key);
     return new ResponseEntity<>(HttpStatus.CREATED);
   }
+
+  // it has to check the hash before changing pwd
+  @PostMapping("/changePassword")
+  public ResponseEntity<String> changePassword(Model model,
+                                               @RequestParam String newPassword,
+                                               HttpServletRequest request) {
+
+    String username = extractUsername(request);
+    service.updateCryptoUserPassword(username, newPassword);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+
 }
