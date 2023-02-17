@@ -33,13 +33,13 @@ let accountNames = ref([])
 async function retrieveEncryptedWallet() {
   await userManagerSingleton.refresh();
   const user = await userManagerSingleton.getUserInfo()
-  return JSON.parse(user.private_keys)[0]
+  return JSON.parse(user["private_keys"])[0]
 }
 
 async function retrieveNames() {
   const user = await userManagerSingleton.getUserInfo()
-  let walletLenght = JSON.parse(user.private_keys)[0].length
-  let names = JSON.parse(user.private_keys)[1]
+  let walletLenght = JSON.parse(user["private_keys"])[0].length
+  let names = JSON.parse(user["private_keys"])[1]
   for(let i = 0; i < walletLenght; i++){
     if(names[i] == null || names[i].match(/^ *$/) !== null)
       names[i] = ("Account " + (i + 1))

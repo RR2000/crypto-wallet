@@ -1,4 +1,5 @@
 import {UserManager} from "oidc-client-ts"
+import axios from "axios";
 
 export const settings = {
   authority: "http://localhost:9000",
@@ -26,7 +27,9 @@ class UserManagerSingleton {
   }
 
   async refresh() {
-    await this.getInstance().signinSilent().then()
+    await this.getInstance().signinSilent().then(function (user) {
+      axios.defaults.headers.common = {'Authorization': `${user.token_type} ${user.access_token}`}
+    })
   }
 
   async getUserInfo() {
@@ -34,8 +37,6 @@ class UserManagerSingleton {
     const user = await this.getInstance().getUser()
     return user ? user.profile : null
   }
-
-
 }
 
 const userManagerSingleton = new UserManagerSingleton(settings)

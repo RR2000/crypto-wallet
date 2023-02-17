@@ -1,7 +1,5 @@
 <script setup>
-import axios from 'axios'
-import bcrypt from "bcryptjs"
-import {userManagerSingleton} from "@/plugins/user-manager"
+import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
 
 const isCurrentPasswordVisible = ref(false)
 const isNewPasswordVisible = ref(false)
@@ -10,37 +8,15 @@ const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 
-function passwordsAreEquals(inputPassword, hash) {
-  return bcrypt.compareSync(inputPassword, hash)
-}
-
 //TODO cambiare anche quella del wallets
 async function changePassword() {
   if (newPassword.value !== confirmPassword.value) {
     alert('New password and confirm password do not match.')
-    return
-  }
-
-  const user = await userManagerSingleton.getUserInfo()
-  if(!passwordsAreEquals(currentPassword.value, user.password)){
-    alert('Wrong password.')
-    
-    return
-  }
-
-  const salt = await bcrypt.genSalt(10)
-  const hashedPassword = await bcrypt.hash(newPassword.value, salt)
-
-  try {
-    const formData = new FormData()
-    formData.append('newPassword', hashedPassword)
-    await axios.post('http://127.0.0.1:9000/changePassword', formData)
-    alert('Password changed successfully.')
+  }else{
+    await cryptoUserUtils.changePassword(currentPassword.value, newPassword.value)
     currentPassword.value = ''
     newPassword.value = ''
     confirmPassword.value = ''
-  } catch (error) {
-    alert(`Error changing password: ${error.response.data.message}`)
   }
 }
 </script>

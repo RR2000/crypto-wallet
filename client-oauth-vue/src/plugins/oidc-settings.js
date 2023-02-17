@@ -1,5 +1,7 @@
 import {Log, OidcClient, UserManager} from "oidc-client-ts"
 
+//TODO DA RIMUOVERE IN FAVORE DI user-manager.js
+
 Log.setLogger(console)
 Log.setLevel(Log.DEBUG)
 
