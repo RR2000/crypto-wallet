@@ -1,11 +1,10 @@
 <script setup>
 import {ethers} from 'ethers'
-import bcrypt from 'bcryptjs'
 import {ref, onMounted} from 'vue'
 import Web3 from 'web3'
 import axios from 'axios'
 import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
-import {userManagerSingleton} from "@/plugins/user-manager";
+import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
 
 function chainUrl(arg){
   if (arg === 0)
@@ -30,45 +29,8 @@ let mnemonicIndex = ref(0)
 let walletTable = ref([])
 let accountNames = ref([])
 
-async function retrieveEncryptedWallet() {
-  await userManagerSingleton.refresh();
-  const user = await userManagerSingleton.getUserInfo()
-  return JSON.parse(user["private_keys"])[0]
-}
-
-async function retrieveNames() {
-  const user = await userManagerSingleton.getUserInfo()
-  let walletLenght = JSON.parse(user["private_keys"])[0].length
-  let names = JSON.parse(user["private_keys"])[1]
-  for(let i = 0; i < walletLenght; i++){
-    if(names[i] == null || names[i].match(/^ *$/) !== null)
-      names[i] = ("Account " + (i + 1))
-  }
-  console.log("retrieveNames", names, walletLenght)
-
-  return names
-}
-
-function checkPassword(inputPassword, hash) {
-  return bcrypt.compareSync(inputPassword, hash)
-}
-
-async function retrieveDecryptedWallet(password) {
-  const encryptedWallet = await retrieveEncryptedWallet()
-  const user = await userManagerSingleton.getUserInfo()
-
-  const passwordMatches = checkPassword(password, user.password)
-  if (!passwordMatches) {
-    throw "La password non corrisponde con quella dell'account"
-  }
-  const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password)
-  console.log("retrieveDecryptedWallet dec ", decryptedWallet)
-
-  return decryptedWallet
-}
-
 async function updateAccountNames() {
-  let encryptedWallet = await retrieveEncryptedWallet()
+  let encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
 
   const formData = new FormData()
   formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
@@ -78,59 +40,30 @@ async function updateAccountNames() {
   } catch (error) {
     console.error('Error adding private key:', error)
   }
-  await retrieveMyWallet()
-  await retrieveNames()
+  await refreshMyWalletTable()
+  await cryptoUserUtils.retrieveNames()
 }
 
-async function updateWallet(plainWallet, password) {
-  let encryptedWallet = plainWallet.encrypt(password)
-
-  const formData = new FormData()
-  formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
-  try {
-    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
-    console.log('Private key added:', response)
-  } catch (error) {
-    console.error('Error adding private key:', error)
-  }
-  await retrieveMyWallet()
-}
-
-// Retrieve balance of each wallet in walletTable array
-async function retrieveWalletBalances() {
-  await Promise.all(walletTable.value.map(async wallet => {
+async function refreshMyWalletTable() {
+  const encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
+  accountNames.value = await cryptoUserUtils.retrieveNames()
+  walletTable.value = await Promise.all(encryptedWallet.map(async wallet => {
     const balance = await web3.eth.getBalance(wallet["address"])
-    console.log(balance)
-    wallet.balance = web3.utils.fromWei(balance, 'ether')
-    wallet.balance = parseFloat(wallet.balance).toFixed(15)
+    const balanceInEther = web3.utils.fromWei(balance, 'ether')
+    return {
+      address: wallet.address,
+      balance: parseFloat(balanceInEther).toFixed(15),
+    }
   }))
 }
-
-
-async function retrieveMyWallet() {
-  const encryptedWallet = await retrieveEncryptedWallet()
-  accountNames.value = await retrieveNames()
-  walletTable.value = []
-
-  console.log("names", accountNames.value)
-
-  walletTable.value = encryptedWallet.map(wallet => ({
-    address: wallet.address,
-    balance: wallet.balance,
-  }))
-  await retrieveWalletBalances()
-}
-
 
 // Create a new account and update wallet
 async function createAccount(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
   myRemoteWallet.add(web3.eth.accounts.create())
-  await Promise.all([
-    updateWallet(myRemoteWallet, password),
-    retrieveEncryptedWallet(),
-    retrieveWalletBalances(),
-  ])
+
+  await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
+  await refreshMyWalletTable()
   cancelAllDialog()
 }
 
@@ -142,32 +75,28 @@ async function addPrivateKeyFromMnemonic(password) {
 
   console.log("derivedWallet", derivedWallet)
 
-  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(derivedWallet.privateKey))
 
   console.log("my remote wallet aggiunto: ", myRemoteWallet)
   newPrivateKey.value = ""
+
+  await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
+  await refreshMyWalletTable()
   cancelAllDialog()
-  await Promise.all([
-    updateWallet(myRemoteWallet, password),
-    retrieveEncryptedWallet(),
-    retrieveWalletBalances(),
-  ])
 }
 
 // Add a new private key to the wallet
 async function addPrivateKey(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
   console.log("my remote wallet: ", myRemoteWallet)
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
 
   console.log("my remote wallet aggiunto: ", myRemoteWallet)
   newPrivateKey.value = ""
-  await Promise.all([
-    updateWallet(myRemoteWallet, password),
-    retrieveEncryptedWallet(),
-    retrieveWalletBalances(),
-  ])
+
+  await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
+  await refreshMyWalletTable()
   cancelAllDialog()
 }
 
@@ -202,7 +131,7 @@ function cancelAllDialog() {
 }
 
 async function showPrivateKey(password) {
-  const myRemoteWallet = await retrieveDecryptedWallet(password)
+  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
   for (let i = 0; i < myRemoteWallet.length; i++) {
     if (
       web3.utils.toChecksumAddress(myRemoteWallet[i].address) ===
@@ -217,7 +146,7 @@ async function showPrivateKey(password) {
 }
 
 onMounted(async function () {
-  await retrieveMyWallet()
+  await refreshMyWalletTable()
 })
 
 const numberRule = val => {
