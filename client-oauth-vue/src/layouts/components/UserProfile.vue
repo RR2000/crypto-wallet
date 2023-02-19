@@ -5,7 +5,7 @@ import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
 let accountDataLocal = ref('')
 
 cryptoUserUtils.getUserInfo().then(
-  function (user) {
+  async function (user) {
     accountDataLocal.value = {
       avatarImg: avatar1,
       name: user.name,
@@ -14,6 +14,7 @@ cryptoUserUtils.getUserInfo().then(
       email: user.email,
       phone: user.phone_number,
       address: user.address,
+      balance: await cryptoUserUtils.getBalance(0)
     }
   },
 )
@@ -31,7 +32,7 @@ const avatarBadgeProps = {
 <template>
   <VBadge v-bind="avatarBadgeProps">
     <VLabel>
-
+      {{accountDataLocal.balance}}
     </VLabel>
     <VAvatar
       style="cursor: pointer;"

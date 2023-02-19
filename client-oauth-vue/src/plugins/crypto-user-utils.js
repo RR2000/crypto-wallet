@@ -116,6 +116,15 @@ class CryptoUserUtils {
     return names
   }
 
+  async getBalance(nWallet){
+    const encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
+
+    const balance = await web3.eth.getBalance(encryptedWallet[nWallet].address)
+    const balanceInEther = web3.utils.fromWei(balance, 'ether')
+
+    return parseFloat(balanceInEther).toFixed(15) + " ETH"
+  }
+
   async updateRemoteWallet(plainWallet, password) {
     let encryptedWallet = await plainWallet.encrypt(password)
     let accountNames = await this.retrieveNames()
