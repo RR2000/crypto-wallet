@@ -4,7 +4,7 @@ import {ref, onMounted} from 'vue'
 import Web3 from 'web3'
 import axios from 'axios'
 import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
-import {cryptoUserUtils} from "@/plugins/crypto-user-utils"
+import {cryptoUser} from "@/plugins/crypto-user-utils"
 import AccountsTable from "@/views/my-wallet/AccountsTable.vue"
 
 function chainUrl(arg) {
@@ -17,10 +17,9 @@ function chainUrl(arg) {
 //useStore().commit('setSelectedAddress', 'address')
 //let address = useStore().getters.selectedAddress
 
-//alert(address)
 //const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
-const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
+const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 
 let isLoading = ref(false)
 let showPrivateKeyDialog = ref(false)
@@ -39,26 +38,31 @@ let walletToDelete = ref(null)
 
 async function updateAccountNames() {
   isLoading.value = true
-  let encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
-
-  const formData = new FormData()
-  formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
   try {
-    const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
-    console.log('Private key added:', response)
-  } catch (error) {
-    console.error('Error adding private key:', error)
+    let encryptedWallet = await cryptoUser.retrieveEncryptedWallet()
+
+    const formData = new FormData()
+    formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
+    try {
+      const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
+      console.log('Private key added:', response)
+    } catch (error) {
+      alert('Error adding private key: ' + error)
+      console.error('Error adding private key:', error)
+    }
+    await refreshMyWalletTable()
+    await cryptoUser.retrieveNames()
+  }catch (e) {
+    alert("error while changin account names " + e)
   }
-  await refreshMyWalletTable()
-  await cryptoUserUtils.retrieveNames()
   isLoading.value = false
 }
 
 async function refreshMyWalletTable() {
   isLoading.value = true
   try {
-    const encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
-    accountNames.value = await cryptoUserUtils.retrieveNames()
+    const encryptedWallet = await cryptoUser.retrieveEncryptedWallet()
+    accountNames.value = await cryptoUser.retrieveNames()
     walletTable.value = await Promise.all(encryptedWallet.map(async wallet => {
       const balance = await web3.eth.getBalance(wallet["address"])
       const balanceInEther = web3.utils.fromWei(balance, 'ether')
@@ -69,29 +73,32 @@ async function refreshMyWalletTable() {
       }
     }))
   }catch (err){
-    alert(err)
+    alert("error while refreshing table: " + err)
   }
   isLoading.value = false
 }
 
-// Create a new account and update wallet
 async function createAccount(password) {
   isLoading.value = true
-  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
-  myRemoteWallet.add(web3.eth.accounts.create())
+  try {
+    const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
+    myRemoteWallet.add(web3.eth.accounts.create())
 
-  await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
-  await refreshMyWalletTable()
-  cancelAllDialog()
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
+    await refreshMyWalletTable()
+    cancelAllDialog()
+  }catch (e) {
+    alert("error while creating account: " + e)
+  }
   isLoading.value = false
 }
 
 async function deleteAccount(password) {
   isLoading.value = true
   try {
-    const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
+    const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
     myRemoteWallet.remove(walletToDelete.value)
-    await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
 
     accountNames.value.splice(walletToDelete.value, 1)
     await updateAccountNames()
@@ -99,7 +106,7 @@ async function deleteAccount(password) {
     await refreshMyWalletTable()
     cancelAllDialog()
   }catch (e) {
-    alert(e)
+    alert("error while deleting account: " + e)
   }
   isLoading.value = false
 }
@@ -107,27 +114,31 @@ async function deleteAccount(password) {
 
 async function addPrivateKeyFromMnemonic(password) {
   isLoading.value = true
-  const wallet = ethers.Wallet.fromPhrase(mnemonicPhrase.value)
-  const hdPath = `m/44'/60'/0'/0/${mnemonicIndex.value}`
-  const derivedWallet = wallet.derivePath(hdPath)
+  try {
+    const wallet = ethers.Wallet.fromPhrase(mnemonicPhrase.value)
+    const hdPath = `m/44'/60'/0'/0/${mnemonicIndex.value}`
+    const derivedWallet = wallet.derivePath(hdPath)
 
-  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
-  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(derivedWallet.privateKey))
+    const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
+    myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(derivedWallet.privateKey))
 
-  await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
-  await refreshMyWalletTable()
-  cancelAllDialog()
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
+    await refreshMyWalletTable()
+    cancelAllDialog()
+  }catch (e){
+    alert("error while adding from mnemonic " + e)
+  }
   isLoading.value = false
 }
 
 // Add a new private key to the wallet
 async function addPrivateKey(password) {
   isLoading.value = true
-  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
+  const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
 
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
 
-  await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
+  await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
   await refreshMyWalletTable()
   cancelAllDialog()
   isLoading.value = false
@@ -171,19 +182,22 @@ function cancelAllDialog() {
 
 async function showPrivateKey(password) {
   isLoading.value = true
-  const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
-  for (let i = 0; i < myRemoteWallet.length; i++) {
-    if (
-      web3.utils.toChecksumAddress(myRemoteWallet[i].address) ===
-      web3.utils.toChecksumAddress(walletAddress)
-    ) {
-      privateKeyToShow.value = myRemoteWallet[i].privateKey
-      break
+  try {
+    const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
+    for (let i = 0; i < myRemoteWallet.length; i++) {
+      if (
+        web3.utils.toChecksumAddress(myRemoteWallet[i].address) ===
+        web3.utils.toChecksumAddress(walletAddress)
+      ) {
+        privateKeyToShow.value = myRemoteWallet[i].privateKey
+        break
+      }
     }
+    cancelAllDialog()
+  }catch (e) {
+    alert(e)
   }
-  cancelAllDialog()
   isLoading.value = false
-  showPrivateKeyDialog.value = true
 }
 
 onMounted(async function () {
@@ -203,7 +217,7 @@ const numberRule = val => {
 }
 
 function onClickedAccount(account){
-  //alert(account)
+
 }
 
 //const selectedAddress = walletTable.value[selectedWallet].address;

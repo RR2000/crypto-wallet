@@ -15,76 +15,69 @@ export const settings = {
   client_authentication: "client_secret_basic",
 }
 
-export let userManagerInstance = null
+const userManager = new UserManager(settings)
 
-class UserManagerSingleton {
-
-  constructor(settings) {
-    if (!userManagerInstance) {
-      userManagerInstance = new UserManager(settings)
-    }
-  }
-
-  getInstance() {
-    return userManagerInstance
-  }
-
-  async refresh() {
-    let user = await this.getInstance().signinSilent()
-    axios.defaults.headers.common = {'Authorization': `${user.token_type} ${user.access_token}`}
-  }
-
-  async getUserInfo() {
-    await this.refresh()
-    const user = await this.getInstance().getUser()
-
-    return user ? user.profile : null
-  }
-}
-
-const userManager = new UserManagerSingleton(settings)
+userManager.signinCallback().then(
+  function (user) {
+    axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
+    window.location.href = '/'
+  },
+)
 
 function comparePasswordHash(inputPassword, hash) {
   return bcrypt.compareSync(inputPassword, hash)
 }
 
-function chainUrl(arg){
-  if (arg === 0)
+function chainUrl(arg) {
+  if (arg === 0) {
     return 'http://localhost:8545'
-  else if(arg === 1)
+  } else if (arg === 1) {
     return 'https://bsc-dataseed1.binance.org:443'
+  }
 }
 
-const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
+const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 
 class CryptoUserUtils {
-
-  async getUserManager(){
-    return userManager.getInstance()
+  async getUserManager() {
+    return userManager
   }
 
-  async signinRedirect(){
+  async signinRedirect() {
     try {
-      await userManager.getInstance().signinRedirect()
+      await userManager.signinRedirect()
     } catch (error) {
-      console.error("Error during sign-in:", error)
+      console.error('Error during sign-in:', error)
     }
   }
 
-  async getUserInfo(){
-    return userManager.getUserInfo()
+  async signinSilent(){
+    let user = null
+    try {
+      user = await userManager.signinSilent()
+      axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
+    }catch (error) {
+      console.error('Error during sign-in:', error)
+    }
+
+    if(user !==null)
+      return user.profile
+    else
+      return null
+  }
+
+  async getUserInfo() {
+    return await this.signinSilent()
   }
 
   async retrieveEncryptedWallet() {
-    await userManager.refresh()
-    const user = await userManager.getUserInfo()
-
-    return JSON.parse(user["private_keys"])[0]
+    const user = await this.getUserInfo()
+    return JSON.parse(user['private_keys'])[0]
   }
 
   async retrieveDecryptedWallet(password) {
     const encryptedWallet = await this.retrieveEncryptedWallet()
-    const user = await userManager.getUserInfo()
+    const user = await this.getUserInfo()
 
     const passwordMatches = comparePasswordHash(password, user.password)
     if (!passwordMatches) {
@@ -97,7 +90,7 @@ class CryptoUserUtils {
   }
 
   async retrieveNames() {
-    const user = await userManager.getUserInfo()
+    const user = await this.getUserInfo()
     let walletLenght = JSON.parse(user["private_keys"])[0].length
     let names = JSON.parse(user["private_keys"])[1]
     for (let i = 0; i < walletLenght; i++) {
@@ -110,7 +103,7 @@ class CryptoUserUtils {
   }
 
   async getBalance(nWallet){
-    const encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
+    const encryptedWallet = await cryptoUser.retrieveEncryptedWallet()
 
     const balance = await web3.eth.getBalance(encryptedWallet[nWallet].address)
     const balanceInEther = web3.utils.fromWei(balance, 'ether')
@@ -125,7 +118,7 @@ class CryptoUserUtils {
     const formData = new FormData()
     formData.append('private_key', JSON.stringify([encryptedWallet, accountNames]))
 
-    await userManager.refresh()
+    await this.signinSilent()
     try {
       const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
       console.log('Private key added:', response)
@@ -135,7 +128,7 @@ class CryptoUserUtils {
   }
 
   async changePassword(currentPassword, newPassword) {
-    const user = await userManager.getUserInfo()
+    const user = await this.getUserInfo()
     if (!comparePasswordHash(currentPassword, user.password)) {
       throw ('Wrong password.')
     }
@@ -150,7 +143,7 @@ class CryptoUserUtils {
       const formData = new FormData()
       formData.append('newPassword', hashedPassword)
 
-      await userManager.refresh()
+      await this.signinSilent()
       await axios.post('http://127.0.0.1:9000/changePassword', formData)
     } catch (error) {
       if (error.response) {
@@ -162,8 +155,8 @@ class CryptoUserUtils {
   }
 }
 
-const cryptoUserUtils = new CryptoUserUtils()
+const cryptoUser = new CryptoUserUtils()
 
 export {
-  cryptoUserUtils,
+  cryptoUser,
 }

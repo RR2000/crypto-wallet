@@ -1,10 +1,10 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
+import {cryptoUser} from "@/plugins/crypto-user-utils";
 
 const accountDataLocal = ref({})
 
-cryptoUserUtils.getUserInfo().then(
+cryptoUser.getUserInfo().then(
   function (user) {
     accountDataLocal.value = {
       avatarImg: avatar1,

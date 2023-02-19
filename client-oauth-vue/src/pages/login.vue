@@ -5,7 +5,7 @@ import authV1MaskDark from '@/assets/images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@/assets/images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@/assets/images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@/assets/images/pages/auth-v1-tree.png'
-import {cryptoUserUtils} from "@/plugins/crypto-user-utils"
+import {cryptoUser} from "@/plugins/crypto-user-utils"
 
 const vuetifyTheme = useTheme()
 const authThemeMask = computed(() => {
@@ -41,7 +41,7 @@ const authThemeMask = computed(() => {
       </VCardText>
 
       <VCardText>
-        <VForm @submit.prevent="cryptoUserUtils.signinRedirect()">
+        <VForm @submit.prevent="cryptoUser.signinRedirect()">
           <VRow>
             <VCol>
               <!-- login button -->

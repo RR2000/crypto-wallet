@@ -1,10 +1,10 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
+import {cryptoUser} from "@/plugins/crypto-user-utils";
 
 let accountDataLocal = ref('')
 
-cryptoUserUtils.getUserInfo().then(
+cryptoUser.getUserInfo().then(
   async function (user) {
     accountDataLocal.value = {
       avatarImg: avatar1,
@@ -14,7 +14,7 @@ cryptoUserUtils.getUserInfo().then(
       email: user.email,
       phone: user.phone_number,
       address: user.address,
-      balance: await cryptoUserUtils.getBalance(0)
+      balance: await cryptoUser.getBalance(0)
     }
   },
 )

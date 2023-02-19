@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { cryptoUserUtils } from "@/plugins/crypto-user-utils";
+import { cryptoUser } from "@/plugins/crypto-user-utils";
 
 const isCurrentPasswordVisible = ref(false);
 const isNewPasswordVisible = ref(false);
@@ -82,7 +82,7 @@ async function changePassword() {
 
   try {
     isChangingPassword.value = true;
-    await cryptoUserUtils.changePassword(currentPassword.value, newPassword.value);
+    await cryptoUser.changePassword(currentPassword.value, newPassword.value);
     currentPassword.value = "";
     newPassword.value = "";
     confirmPassword.value = "";
