@@ -22,12 +22,12 @@ function chainUrl(arg) {
 
 const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
 
+let isLoading = ref(false)
 let showPrivateKeyDialog = ref(false)
 let showPrivateKeyPasswordDialog = ref(false)
 let showCreateAccountDialog = ref(false)
 let showImportPrivateKeyDialog = ref(false)
 let showImportMnemonicDialog = ref(false)
-let selectedWallet = ref(null)
 let newPrivateKey = ref('')
 let privateKeyToShow = ref('')
 let mnemonicPhrase = ref('')
@@ -36,6 +36,7 @@ let walletTable = ref([])
 let accountNames = ref([])
 
 async function updateAccountNames() {
+  isLoading.value = true
   let encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
 
   const formData = new FormData()
@@ -48,9 +49,11 @@ async function updateAccountNames() {
   }
   await refreshMyWalletTable()
   await cryptoUserUtils.retrieveNames()
+  isLoading.value = false
 }
 
 async function refreshMyWalletTable() {
+  isLoading.value = true
   const encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
   accountNames.value = await cryptoUserUtils.retrieveNames()
   walletTable.value = await Promise.all(encryptedWallet.map(async wallet => {
@@ -62,20 +65,24 @@ async function refreshMyWalletTable() {
       balance: parseFloat(balanceInEther).toFixed(15),
     }
   }))
+  isLoading.value = false
 }
 
 // Create a new account and update wallet
 async function createAccount(password) {
+  isLoading.value = true
   const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
   myRemoteWallet.add(web3.eth.accounts.create())
 
   await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
   await refreshMyWalletTable()
   cancelAllDialog()
+  isLoading.value = false
 }
 
 
 async function addPrivateKeyFromMnemonic(password) {
+  isLoading.value = true
   const wallet = ethers.Wallet.fromPhrase(mnemonicPhrase.value)
   const hdPath = `m/44'/60'/0'/0/${mnemonicIndex.value}`
   const derivedWallet = wallet.derivePath(hdPath)
@@ -86,10 +93,12 @@ async function addPrivateKeyFromMnemonic(password) {
   await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
   await refreshMyWalletTable()
   cancelAllDialog()
+  isLoading.value = false
 }
 
 // Add a new private key to the wallet
 async function addPrivateKey(password) {
+  isLoading.value = true
   const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
 
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
@@ -97,6 +106,7 @@ async function addPrivateKey(password) {
   await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
   await refreshMyWalletTable()
   cancelAllDialog()
+  isLoading.value = false
 }
 
 function askCreateAccount() {
@@ -129,6 +139,7 @@ function cancelAllDialog() {
 }
 
 async function showPrivateKey(password) {
+  isLoading.value = true
   const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
   for (let i = 0; i < myRemoteWallet.length; i++) {
     if (
@@ -140,6 +151,7 @@ async function showPrivateKey(password) {
     }
   }
   cancelAllDialog()
+  isLoading.value = false
   showPrivateKeyDialog.value = true
 }
 
@@ -160,7 +172,7 @@ const numberRule = val => {
 }
 
 function onClickedAccount(account){
-  alert(account)
+  //alert(account)
 }
 
 //const selectedAddress = walletTable.value[selectedWallet].address;
@@ -256,6 +268,14 @@ function onClickedAccount(account){
       </VCard>
     </VCol>
   </VRow>
+  <v-dialog v-model="isLoading" persistent>
+    <v-card color="primary">
+      <v-card-text class="text-center">
+        <v-progress-circular indeterminate="true" color="white"></v-progress-circular>
+        <span class="ml-2 white--text">Caricamento in corso...</span>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
   <PasswordDialog
     v-model="showPrivateKeyPasswordDialog"
     title="Sei sicuro di voler mostrare la chiave privata!?"

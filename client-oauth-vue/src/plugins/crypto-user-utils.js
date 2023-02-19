@@ -151,8 +151,6 @@ class CryptoUserUtils {
       let decryptedWallet = await this.retrieveDecryptedWallet(currentPassword)
       await this.updateRemoteWallet(decryptedWallet, newPassword)
 
-      alert('Crypto wallet password changed successfully.')
-
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
 
@@ -161,7 +159,6 @@ class CryptoUserUtils {
 
       await userManager.refresh()
       await axios.post('http://127.0.0.1:9000/changePassword', formData)
-      alert('Account password changed successfully.')
     } catch (error) {
       if (error.response) {
         alert(`Error changing password: ${error.response.data.message}`)
