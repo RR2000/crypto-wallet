@@ -33,9 +33,9 @@ class UserManagerSingleton {
     let self = this
     await this.getInstance().signinSilent().then(function (user) {
       axios.defaults.headers.common = {'Authorization': `${user.token_type} ${user.access_token}`}
-    }).catch(function (err) {
+    }).catch(function () {
       self.getInstance().signinRedirect().catch(function (err){
-        alert("Impossibile connettersi al server!")
+        alert("Impossibile connettersi al server!: " + err)
       })
     })
   }
@@ -43,7 +43,7 @@ class UserManagerSingleton {
   async getUserInfo() {
     await this.refresh()
     const user = await this.getInstance().getUser()
-    
+
     return user ? user.profile : null
   }
 }
@@ -73,7 +73,7 @@ class CryptoUserUtils {
   }
 
   async setCallback(action){
-    userManager.getInstance().signinCallback().then(
+    await userManager.getInstance().signinCallback().then(
       action,
     )
   }
@@ -85,7 +85,7 @@ class CryptoUserUtils {
   async retrieveEncryptedWallet() {
     await userManager.refresh()
     const user = await userManager.getUserInfo()
-    
+
     return JSON.parse(user["private_keys"])[0]
   }
 

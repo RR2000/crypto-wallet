@@ -26,6 +26,7 @@ let isLoading = ref(false)
 let showPrivateKeyDialog = ref(false)
 let showPrivateKeyPasswordDialog = ref(false)
 let showCreateAccountDialog = ref(false)
+let showDeleteAccountDialog = ref(false)
 let showImportPrivateKeyDialog = ref(false)
 let showImportMnemonicDialog = ref(false)
 let newPrivateKey = ref('')
@@ -34,6 +35,7 @@ let mnemonicPhrase = ref('')
 let mnemonicIndex = ref(0)
 let walletTable = ref([])
 let accountNames = ref([])
+let walletToDelete = ref(null)
 
 async function updateAccountNames() {
   isLoading.value = true
@@ -80,6 +82,24 @@ async function createAccount(password) {
   isLoading.value = false
 }
 
+async function deleteAccount(password) {
+  isLoading.value = true
+  try {
+    const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
+    myRemoteWallet.remove(walletToDelete.value)
+    await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
+
+    accountNames.value.splice(walletToDelete.value, 1)
+    await updateAccountNames()
+
+    await refreshMyWalletTable()
+    cancelAllDialog()
+  }catch (e) {
+    alert(e)
+  }
+  isLoading.value = false
+}
+
 
 async function addPrivateKeyFromMnemonic(password) {
   isLoading.value = true
@@ -113,6 +133,11 @@ function askCreateAccount() {
   showCreateAccountDialog.value = true
 }
 
+function askDeleteKey(index) {
+  walletToDelete.value = index
+  showDeleteAccountDialog.value = true
+}
+
 function askImportPrivateKey() {
   showImportPrivateKeyDialog.value = true
 }
@@ -132,10 +157,12 @@ function cancelAllDialog() {
   mnemonicPhrase.value = ''
   newPrivateKey.value = ''
   mnemonicIndex.value = 0
+  walletToDelete.value = null
   showImportMnemonicDialog.value = false
   showPrivateKeyPasswordDialog.value = false
   showCreateAccountDialog.value = false
   showImportPrivateKeyDialog.value = false
+  showDeleteAccountDialog.value = false
 }
 
 async function showPrivateKey(password) {
@@ -186,6 +213,7 @@ function onClickedAccount(account){
           :wallet-table="walletTable"
           :account-names="accountNames"
           @ask-private-key="askPrivateKey"
+          @ask-delete-private-key="askDeleteKey"
           @update-account-names="updateAccountNames"
           @account-clicked="onClickedAccount"
         />
@@ -286,6 +314,12 @@ function onClickedAccount(account){
     v-model="showCreateAccountDialog"
     title="Inserisci la password per aggiungere un nuovo indirizzo"
     @confirm="createAccount"
+    @cancel="cancelAllDialog"
+  />
+  <PasswordDialog
+    v-model="showDeleteAccountDialog"
+    title="Sicuro di voler eliminare l'account?"
+    @confirm="deleteAccount"
     @cancel="cancelAllDialog"
   />
   <PasswordDialog

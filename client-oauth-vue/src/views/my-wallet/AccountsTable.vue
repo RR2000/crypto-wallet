@@ -2,10 +2,11 @@
   <VTable>
     <thead>
       <tr>
-        <th>Nome</th>
-        <th>Chiave pubblica</th>
-        <th>Bilancio</th>
-        <th>Mostra chiave privata</th>
+        <th class="text-center">Nome</th>
+        <th class="text-center">Chiave pubblica</th>
+        <th class="text-center">Bilancio</th>
+        <th class="text-center">Mostra chiave privata</th>
+        <th class="text-center">Elimina</th>
       </tr>
     </thead>
     <tbody>
@@ -15,22 +16,25 @@
         :class="{ 'selected': item === selectedWallet }"
         @click="accountClicked(item)"
       >
-        <td>
+        <td class="text-center">
           <VTextField
             v-model="accountNames[index]"
-            class="account-name"
           />
         </td>
-        <td>{{ '0x' + item.address.toUpperCase() }}</td>
-        <td>{{ item.balance }}</td>
-        <td>
+        <td class="text-center" style="font-family: monospace; font-size: large">{{ '0x' + item.address.toUpperCase() }}</td>
+        <td class="text-center">{{ item.balance }}</td>
+        <td class="text-center">
           <VBtn
-            icon
-            class="show-private-key"
+            icon="mdi-eye"
             @click="askPrivateKey(item.address)"
-          >
-            <VIcon>mdi-eye</VIcon>
-          </VBtn>
+          />
+        </td>
+        <td class="text-center">
+          <VBtn
+            icon="mdi-bin"
+            color="error"
+            @click="askDeletePrivateKey(index)"
+          />
         </td>
       </tr>
     </tbody>
@@ -64,6 +68,9 @@ export default {
     },
     askPrivateKey(address) {
       this.$emit('ask-private-key', address)
+    },
+    askDeletePrivateKey(index) {
+      this.$emit('ask-delete-private-key', index)
     },
   },
 }
