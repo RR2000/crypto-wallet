@@ -114,9 +114,8 @@ class CryptoUserUtils {
     return parseFloat(balanceInEther).toFixed(15) + " ETH"
   }
 
-  async updateRemoteWallet(plainWallet, password) {
+  async updateRemoteWallet(plainWallet, accountNames, password) {
     let encryptedWallet = await plainWallet.encrypt(password)
-    let accountNames = await this.retrieveNames()
 
     const formData = new FormData()
     formData.append('private_key', JSON.stringify([encryptedWallet, accountNames]))
@@ -154,6 +153,19 @@ class CryptoUserUtils {
       } else {
         alert(`Error changing password: ${error.message}`)
       }
+    }
+  }
+
+  async updateRemoteNames(encryptedWallet, accountNames) {
+    const formData = new FormData()
+    formData.append('private_key', JSON.stringify([encryptedWallet, accountNames]))
+
+    await this.signinSilent()
+    try {
+      const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
+      console.log('Private key added:', response)
+    } catch (error) {
+      console.error('Error adding private key:', error)
     }
   }
 }

@@ -1,8 +1,6 @@
 <script setup>
 import {ethers} from 'ethers'
 import {ref, onMounted} from 'vue'
-import Web3 from 'web3'
-import axios from 'axios'
 import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
 import {cryptoUser, web3} from "@/plugins/crypto-user-utils"
 import AccountsTable from "@/views/my-wallet/AccountsTable.vue"
@@ -37,21 +35,10 @@ let walletToDelete = ref(null)
 async function updateAccountNames() {
   isLoading.value = true
   try {
-    let encryptedWallet = await cryptoUser.retrieveEncryptedWallet()
-
-    const formData = new FormData()
-    formData.append('private_key', JSON.stringify([encryptedWallet, accountNames.value]))
-    try {
-      const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
-      console.log('Private key added:', response)
-    } catch (error) {
-      alert('Error adding private key: ' + error)
-      console.error('Error adding private key:', error)
-    }
-    await refreshMyWalletTable()
-    await cryptoUser.retrieveNames()
+    const myRemoteWallet = await cryptoUser.retrieveEncryptedWallet()
+    await cryptoUser.updateRemoteNames(myRemoteWallet, accountNames.value)
   }catch (e) {
-    alert("error while changin account names " + e)
+    alert("error while updating account: " + e)
   }
   isLoading.value = false
 }
@@ -82,7 +69,7 @@ async function createAccount(password) {
     const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
     myRemoteWallet.add(web3.eth.accounts.create())
 
-    await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
     await refreshMyWalletTable()
     cancelAllDialog()
   }catch (e) {
@@ -96,10 +83,9 @@ async function deleteAccount(password) {
   try {
     const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
     myRemoteWallet.remove(walletToDelete.value)
-    await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
 
     accountNames.value.splice(walletToDelete.value, 1)
-    await updateAccountNames()
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
 
     await refreshMyWalletTable()
     cancelAllDialog()
@@ -120,7 +106,7 @@ async function addPrivateKeyFromMnemonic(password) {
     const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
     myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(derivedWallet.privateKey))
 
-    await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
     await refreshMyWalletTable()
     cancelAllDialog()
   }catch (e){
@@ -136,7 +122,7 @@ async function addPrivateKey(password) {
 
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
 
-  await cryptoUser.updateRemoteWallet(myRemoteWallet, password)
+  await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
   await refreshMyWalletTable()
   cancelAllDialog()
   isLoading.value = false
