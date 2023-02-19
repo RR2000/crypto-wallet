@@ -4,15 +4,20 @@ import {ref, onMounted} from 'vue'
 import Web3 from 'web3'
 import axios from 'axios'
 import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
-import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
+import {cryptoUserUtils} from "@/plugins/crypto-user-utils"
+import AccountsTable from "@/views/my-wallet/AccountsTable.vue"
 
-function chainUrl(arg){
+function chainUrl(arg) {
   if (arg === 0)
     return 'http://localhost:8545'
-  else if(arg === 1)
+  else if (arg === 1)
     return 'https://bsc-dataseed1.binance.org:443'
 }
 
+//useStore().commit('setSelectedAddress', 'address')
+//let address = useStore().getters.selectedAddress
+
+//alert(address)
 //const accountPrivateKey = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
 const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
@@ -22,6 +27,7 @@ let showPrivateKeyPasswordDialog = ref(false)
 let showCreateAccountDialog = ref(false)
 let showImportPrivateKeyDialog = ref(false)
 let showImportMnemonicDialog = ref(false)
+let selectedWallet = ref(null)
 let newPrivateKey = ref('')
 let privateKeyToShow = ref('')
 let mnemonicPhrase = ref('')
@@ -50,6 +56,7 @@ async function refreshMyWalletTable() {
   walletTable.value = await Promise.all(encryptedWallet.map(async wallet => {
     const balance = await web3.eth.getBalance(wallet["address"])
     const balanceInEther = web3.utils.fromWei(balance, 'ether')
+    
     return {
       address: wallet.address,
       balance: parseFloat(balanceInEther).toFixed(15),
@@ -73,13 +80,8 @@ async function addPrivateKeyFromMnemonic(password) {
   const hdPath = `m/44'/60'/0'/0/${mnemonicIndex.value}`
   const derivedWallet = wallet.derivePath(hdPath)
 
-  console.log("derivedWallet", derivedWallet)
-
   const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
   myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(derivedWallet.privateKey))
-
-  console.log("my remote wallet aggiunto: ", myRemoteWallet)
-  newPrivateKey.value = ""
 
   await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
   await refreshMyWalletTable()
@@ -89,11 +91,8 @@ async function addPrivateKeyFromMnemonic(password) {
 // Add a new private key to the wallet
 async function addPrivateKey(password) {
   const myRemoteWallet = await cryptoUserUtils.retrieveDecryptedWallet(password)
-  console.log("my remote wallet: ", myRemoteWallet)
-  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
 
-  console.log("my remote wallet aggiunto: ", myRemoteWallet)
-  newPrivateKey.value = ""
+  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
 
   await cryptoUserUtils.updateRemoteWallet(myRemoteWallet, password)
   await refreshMyWalletTable()
@@ -113,7 +112,6 @@ function askMnemonic() {
 }
 
 let walletAddress
-
 function askPrivateKey(clickedWallet) {
   walletAddress = clickedWallet
   showPrivateKeyPasswordDialog.value = true
@@ -150,64 +148,35 @@ onMounted(async function () {
 })
 
 const numberRule = val => {
-  if (val === ''){
+  if (val === '') {
     return 'Campo obbligatorio'
   } else if (val < 0) {
     return 'Il numero deve essere positivo!'
   } else if (!Number.isInteger(val)) {
     return 'Il numero deve essere intero!'
   }
-
+  
   return true
 }
+
+function onClickedAccount(account){
+  alert(account)
+}
+
+//const selectedAddress = walletTable.value[selectedWallet].address;
 </script>
 
 <template>
   <VRow>
     <VCol>
       <VCard title="Il mio wallet">
-        <VTable>
-          <thead>
-            <tr>
-              <th class="text-uppercase">
-                Nome
-              </th>
-              <th class="text-uppercase">
-                Chiave pubblica
-              </th>
-              <th class="text-center text-uppercase">
-                Bilancio
-              </th>
-              <th class="text-center text-uppercase">
-                Mostra chiave privata
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(item, index) in walletTable"
-              :key="item.address"
-            >
-              <td>
-                <VTextField
-                  v-model="accountNames[index]"
-                />
-              </td>
-              <td style="font-family: monospace; font-size: 1em">
-                {{ "0x" + item.address.toUpperCase() }}
-              </td>
-              <td class="text-center">
-                {{ item.balance }}
-              </td>
-              <td class="text-center">
-                <VBtn
-                  icon="mdi-eye"
-                  @click="askPrivateKey(item.address)"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </VTable>
+        <AccountsTable
+          :wallet-table="walletTable"
+          :account-names="accountNames"
+          @ask-private-key="askPrivateKey"
+          @update-account-names="updateAccountNames"
+          @account-clicked="onClickedAccount"
+        />
         <VCol class="d-flex justify-end">
           <VBtn @click="updateAccountNames">
             Conferma modifica

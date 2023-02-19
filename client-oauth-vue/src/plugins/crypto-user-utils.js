@@ -1,7 +1,54 @@
-import {userManagerSingleton} from "@/plugins/user-manager"
-import bcrypt from "bcryptjs";
-import axios from "axios";
-import Web3 from "web3";
+import bcrypt from "bcryptjs"
+import {UserManager} from "oidc-client-ts"
+import Web3 from "web3"
+import axios from "axios"
+
+export const settings = {
+  authority: "http://localhost:9000",
+  client_id: "crypto-client",
+  client_secret: "secret",
+  redirect_uri: window.location.origin + '/callback',
+  post_logout_redirect_uri: window.location.origin + '/',
+  response_type: "code",
+  loadUserInfo: true,
+  scope: "openid profile email wallets.private_keys",
+  client_authentication: "client_secret_basic",
+}
+
+let userManagerInstance = null
+
+class UserManagerSingleton {
+
+  constructor(settings) {
+    if (!userManagerInstance) {
+      userManagerInstance = new UserManager(settings)
+    }
+  }
+
+  getInstance() {
+    return userManagerInstance
+  }
+
+  async refresh() {
+    let self = this
+    await this.getInstance().signinSilent().then(function (user) {
+      axios.defaults.headers.common = {'Authorization': `${user.token_type} ${user.access_token}`}
+    }).catch(function (err) {
+      self.getInstance().signinRedirect().catch(function (err){
+        alert("Impossibile connettersi al server!")
+      })
+    })
+  }
+
+  async getUserInfo() {
+    await this.refresh()
+    const user = await this.getInstance().getUser()
+    
+    return user ? user.profile : null
+  }
+}
+
+const userManager = new UserManagerSingleton(settings)
 
 function comparePasswordHash(inputPassword, hash) {
   return bcrypt.compareSync(inputPassword, hash)
@@ -17,15 +64,34 @@ function chainUrl(arg){
 const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
 
 class CryptoUserUtils {
+  async signinRedirect(){
+    try {
+      await userManager.getInstance().signinRedirect()
+    } catch (error) {
+      console.error("Error during sign-in:", error)
+    }
+  }
+
+  async setCallback(action){
+    userManager.getInstance().signinCallback().then(
+      action,
+    )
+  }
+
+  async getUserInfo(){
+    return userManager.getUserInfo()
+  }
+
   async retrieveEncryptedWallet() {
-    await userManagerSingleton.refresh();
-    const user = await userManagerSingleton.getUserInfo()
+    await userManager.refresh()
+    const user = await userManager.getUserInfo()
+    
     return JSON.parse(user["private_keys"])[0]
   }
 
   async retrieveDecryptedWallet(password) {
     const encryptedWallet = await this.retrieveEncryptedWallet()
-    const user = await userManagerSingleton.getUserInfo()
+    const user = await userManager.getUserInfo()
 
     const passwordMatches = comparePasswordHash(password, user.password)
     if (!passwordMatches) {
@@ -38,7 +104,7 @@ class CryptoUserUtils {
   }
 
   async retrieveNames() {
-    const user = await userManagerSingleton.getUserInfo()
+    const user = await userManager.getUserInfo()
     let walletLenght = JSON.parse(user["private_keys"])[0].length
     let names = JSON.parse(user["private_keys"])[1]
     for (let i = 0; i < walletLenght; i++) {
@@ -57,7 +123,7 @@ class CryptoUserUtils {
     const formData = new FormData()
     formData.append('private_key', JSON.stringify([encryptedWallet, accountNames]))
 
-    await userManagerSingleton.refresh()
+    await userManager.refresh()
     try {
       const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
       console.log('Private key added:', response)
@@ -67,7 +133,7 @@ class CryptoUserUtils {
   }
 
   async changePassword(currentPassword, newPassword) {
-    const user = await userManagerSingleton.getUserInfo()
+    const user = await userManager.getUserInfo()
     if (!comparePasswordHash(currentPassword, user.password)) {
       throw ('Wrong password.')
     }
@@ -84,7 +150,7 @@ class CryptoUserUtils {
       const formData = new FormData()
       formData.append('newPassword', hashedPassword)
 
-      await userManagerSingleton.refresh()
+      await userManager.refresh()
       await axios.post('http://127.0.0.1:9000/changePassword', formData)
       alert('Account password changed successfully.')
     } catch (error) {

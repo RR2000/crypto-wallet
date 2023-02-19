@@ -1,10 +1,10 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import {userManagerSingleton} from "@/plugins/user-manager";
+import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
 
 let accountDataLocal = ref('')
 
-userManagerSingleton.getUserInfo().then(
+cryptoUserUtils.getUserInfo().then(
   function (user) {
     accountDataLocal.value = {
       avatarImg: avatar1,
@@ -30,6 +30,9 @@ const avatarBadgeProps = {
 
 <template>
   <VBadge v-bind="avatarBadgeProps">
+    <VLabel>
+
+    </VLabel>
     <VAvatar
       style="cursor: pointer;"
       color="primary"
@@ -95,32 +98,6 @@ const avatarBadgeProps = {
             </template>
 
             <VListItemTitle>Settings</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 Pricing -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-currency-usd"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>Pricing</VListItemTitle>
-          </VListItem>
-
-          <!-- 👉 FAQ -->
-          <VListItem link>
-            <template #prepend>
-              <VIcon
-                class="me-2"
-                icon="mdi-help-circle-outline"
-                size="22"
-              />
-            </template>
-
-            <VListItemTitle>FAQ</VListItemTitle>
           </VListItem>
 
           <!-- Divider -->

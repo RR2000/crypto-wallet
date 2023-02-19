@@ -1,5 +1,5 @@
 <script setup>
-import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
+import {cryptoUserUtils} from "@/plugins/crypto-user-utils"
 
 const isCurrentPasswordVisible = ref(false)
 const isNewPasswordVisible = ref(false)

@@ -5,20 +5,12 @@ import authV1MaskDark from '@/assets/images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@/assets/images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@/assets/images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@/assets/images/pages/auth-v1-tree.png'
-import {userManager} from "@/plugins/oidc-settings"
+import {cryptoUserUtils} from "@/plugins/crypto-user-utils"
 
 const vuetifyTheme = useTheme()
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
-
-const performLogin = async () => {
-  try {
-    await userManager.signinRedirect()
-  } catch (error) {
-    console.error("Error during sign-in:", error)
-  }
-}
 </script>
 
 <template>
@@ -49,7 +41,7 @@ const performLogin = async () => {
       </VCardText>
 
       <VCardText>
-        <VForm @submit.prevent="performLogin">
+        <VForm @submit.prevent="cryptoUserUtils.signinRedirect()">
           <VRow>
             <VCol>
               <!-- login button -->

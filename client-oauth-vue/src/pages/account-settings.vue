@@ -17,7 +17,7 @@ const tabs = [
     title: 'Security',
     icon: 'mdi-lock-open-outline',
     tab: 'security',
-  }
+  },
 ]
 </script>
 

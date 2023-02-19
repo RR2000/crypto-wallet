@@ -1,10 +1,10 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import {userManagerSingleton} from "@/plugins/user-manager";
+import {cryptoUserUtils} from "@/plugins/crypto-user-utils";
 
 const accountDataLocal = ref({})
 
-userManagerSingleton.getUserInfo().then(
+cryptoUserUtils.getUserInfo().then(
   function (user) {
     accountDataLocal.value = {
       avatarImg: avatar1,
