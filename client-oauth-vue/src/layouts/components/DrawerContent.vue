@@ -6,12 +6,21 @@ import {
   VerticalNavLink,
   VerticalNavSectionTitle,
 } from '@layouts'
-import { useTheme } from 'vuetify'
+import {useTheme} from 'vuetify'
+import {cryptoUser} from "@/plugins/crypto-user-utils";
 
 const vuetifyTheme = useTheme()
 const upgradeBanner = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? upgradeBannerLight : upgradeBannerDark
 })
+let showLogin = ref(true)
+try {
+  cryptoUser.getUserInfo().then(function (user) {
+    showLogin.value = user === null
+  })
+}catch (e) {
+  showLogin.value = false
+}
 </script>
 
 <template>
@@ -22,7 +31,7 @@ const upgradeBanner = computed(() => {
       class="app-logo d-flex align-center gap-x-3 app-title-wrapper"
     >
       <!-- ℹ️ You can also use img tag or VImg here -->
-      <div v-html="logo" />
+      <div v-html="logo"/>
 
       <Transition name="vertical-nav-app-title">
         <h1 class="font-weight-semibold leading-normal text-xl text-uppercase">
@@ -36,15 +45,8 @@ const upgradeBanner = computed(() => {
   <ul>
     <VerticalNavLink
       :item="{
-        title: 'Dashboard',
-        to: 'index',
-        icon: { icon: 'mdi-home-outline' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
         title: 'Il mio wallet',
-        to: 'my-wallet',
+        to: 'index',
         icon: { icon: 'mdi-wallet-outline' }
       }"
     />
@@ -56,20 +58,13 @@ const upgradeBanner = computed(() => {
       }"
     />
     <!-- 👉 Pages -->
-    <VerticalNavSectionTitle :item="{ heading: 'Pages' }" />
+    <VerticalNavSectionTitle :item="{ heading: 'Pages' }"/>
     <VerticalNavLink
+      v-if="showLogin"
       :item="{
         title: 'Login',
         to: 'login',
         icon: { icon: 'mdi-login' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
-        title: 'Register',
-        to: 'register',
-        target: '_blank',
-        icon: { icon: 'mdi-account-plus-outline' }
       }"
     />
 
@@ -84,8 +79,14 @@ const upgradeBanner = computed(() => {
     />
 
     <!-- 👉 User Interface -->
-    <VerticalNavSectionTitle :item="{ heading: 'User Interface' }" />
-
+    <VerticalNavSectionTitle :item="{ heading: 'User Interface' }"/>
+    <VerticalNavLink
+      :item="{
+        title: 'Dashboard',
+        to: 'dashboard',
+        icon: { icon: 'mdi-home-outline' }
+      }"
+    />
     <VerticalNavLink
       :item="{
         title: 'Typography',

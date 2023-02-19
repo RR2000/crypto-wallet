@@ -36,7 +36,7 @@ function chainUrl(arg) {
   }
 }
 
-const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
+export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
 
 class CryptoUserUtils {
   async getUserManager() {
@@ -51,16 +51,16 @@ class CryptoUserUtils {
     }
   }
 
-  async signinSilent(){
+  async signinSilent() {
     let user = null
     try {
       user = await userManager.signinSilent()
       axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
-    }catch (error) {
+    } catch (error) {
       console.error('Error during sign-in:', error)
     }
 
-    if(user !==null)
+    if (user !== null)
       return user.profile
     else
       return null
@@ -72,12 +72,15 @@ class CryptoUserUtils {
 
   async retrieveEncryptedWallet() {
     const user = await this.getUserInfo()
-    return JSON.parse(user['private_keys'])[0]
+    if (user === null)
+      return []
+    else
+      return JSON.parse(user['private_keys'])[0]
   }
 
   async retrieveDecryptedWallet(password) {
-    const encryptedWallet = await this.retrieveEncryptedWallet()
     const user = await this.getUserInfo()
+    const encryptedWallet = await this.retrieveEncryptedWallet()
 
     const passwordMatches = comparePasswordHash(password, user.password)
     if (!passwordMatches) {
@@ -102,7 +105,7 @@ class CryptoUserUtils {
     return names
   }
 
-  async getBalance(nWallet){
+  async getBalance(nWallet) {
     const encryptedWallet = await cryptoUser.retrieveEncryptedWallet()
 
     const balance = await web3.eth.getBalance(encryptedWallet[nWallet].address)
