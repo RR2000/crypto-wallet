@@ -56,17 +56,21 @@ async function updateAccountNames() {
 
 async function refreshMyWalletTable() {
   isLoading.value = true
-  const encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
-  accountNames.value = await cryptoUserUtils.retrieveNames()
-  walletTable.value = await Promise.all(encryptedWallet.map(async wallet => {
-    const balance = await web3.eth.getBalance(wallet["address"])
-    const balanceInEther = web3.utils.fromWei(balance, 'ether')
-    
-    return {
-      address: wallet.address,
-      balance: parseFloat(balanceInEther).toFixed(15),
-    }
-  }))
+  try {
+    const encryptedWallet = await cryptoUserUtils.retrieveEncryptedWallet()
+    accountNames.value = await cryptoUserUtils.retrieveNames()
+    walletTable.value = await Promise.all(encryptedWallet.map(async wallet => {
+      const balance = await web3.eth.getBalance(wallet["address"])
+      const balanceInEther = web3.utils.fromWei(balance, 'ether')
+
+      return {
+        address: wallet.address,
+        balance: parseFloat(balanceInEther).toFixed(15),
+      }
+    }))
+  }catch (err){
+    alert(err)
+  }
   isLoading.value = false
 }
 

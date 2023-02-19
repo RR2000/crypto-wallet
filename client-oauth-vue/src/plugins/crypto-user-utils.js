@@ -15,7 +15,7 @@ export const settings = {
   client_authentication: "client_secret_basic",
 }
 
-let userManagerInstance = null
+export let userManagerInstance = null
 
 class UserManagerSingleton {
 
@@ -30,14 +30,8 @@ class UserManagerSingleton {
   }
 
   async refresh() {
-    let self = this
-    await this.getInstance().signinSilent().then(function (user) {
-      axios.defaults.headers.common = {'Authorization': `${user.token_type} ${user.access_token}`}
-    }).catch(function () {
-      self.getInstance().signinRedirect().catch(function (err){
-        alert("Impossibile connettersi al server!: " + err)
-      })
-    })
+    let user = await this.getInstance().signinSilent()
+    axios.defaults.headers.common = {'Authorization': `${user.token_type} ${user.access_token}`}
   }
 
   async getUserInfo() {
@@ -64,18 +58,17 @@ function chainUrl(arg){
 const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
 
 class CryptoUserUtils {
+
+  async getUserManager(){
+    return userManager.getInstance()
+  }
+
   async signinRedirect(){
     try {
       await userManager.getInstance().signinRedirect()
     } catch (error) {
       console.error("Error during sign-in:", error)
     }
-  }
-
-  async setCallback(action){
-    await userManager.getInstance().signinCallback().then(
-      action,
-    )
   }
 
   async getUserInfo(){
