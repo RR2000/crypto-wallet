@@ -1,8 +1,15 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import {cryptoUser} from "@/plugins/crypto-user-utils";
+import {cryptoUser, web3} from "@/plugins/crypto-user-utils";
+import {store} from "@/plugins/store";
 
 let accountDataLocal = ref('')
+
+computed({
+  account() {
+    return store.getters.inUseWallet
+  }
+})
 
 cryptoUser.getUserInfo().then(
   async function (user) {
@@ -13,8 +20,7 @@ cryptoUser.getUserInfo().then(
       lastName: user.family_name,
       email: user.email,
       phone: user.phone_number,
-      address: user.address,
-      balance: await cryptoUser.getBalance(0)
+      address: user.address
     }
   },
 )
@@ -32,14 +38,14 @@ const avatarBadgeProps = {
 <template>
   <VBadge v-bind="avatarBadgeProps">
     <VLabel>
-      {{accountDataLocal.balance}}
+      {{store.getters.inUseWallet.balance + " ETH"}}
     </VLabel>
     <VAvatar
       style="cursor: pointer;"
       color="primary"
       variant="tonal"
     >
-      <VImg :src="avatar1" />
+      <VImg :src="avatar1"/>
 
       <!-- SECTION Menu -->
       <VMenu
@@ -59,7 +65,7 @@ const avatarBadgeProps = {
                     size="40"
                     variant="tonal"
                   >
-                    <VImg :src="avatar1" />
+                    <VImg :src="avatar1"/>
                   </VAvatar>
                 </VBadge>
               </VListItemAction>
@@ -73,7 +79,7 @@ const avatarBadgeProps = {
             </VListItemSubtitle>
           </VListItem>
 
-          <VDivider class="my-2" />
+          <VDivider class="my-2"/>
 
           <!-- 👉 Profile -->
           <VListItem link>
@@ -102,7 +108,7 @@ const avatarBadgeProps = {
           </VListItem>
 
           <!-- Divider -->
-          <VDivider class="my-2" />
+          <VDivider class="my-2"/>
 
           <!-- 👉 Logout -->
           <VListItem to="/login">

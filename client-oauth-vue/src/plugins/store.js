@@ -2,14 +2,19 @@ import {createStore} from "vuex";
 
 export const store = createStore({
   state: {
-    todos: [
-      { id: 1, text: '...', done: true },
-      { id: 2, text: '...', done: false }
-    ]
+    inUseWallet: {
+      address: "Nessun account selezionato",
+      balance: "Nessun account selezionato"
+    }
   },
   getters: {
-    doneTodos (state) {
-      return state.todos.filter(todo => todo.done)
+    inUseWallet (state) {
+      return state.inUseWallet
+    }
+  },
+  mutations: {
+    cahngeUseWallet (state, wallet) {
+      return state.inUseWallet = wallet
     }
   }
 })

@@ -13,15 +13,17 @@
       <tr
         v-for="(item, index) in walletTable"
         :key="item.address"
-        :class="{ 'selected': item === selectedWallet }"
-        @click="accountClicked(item)"
       >
         <td class="text-center">
           <VTextField
             v-model="accountNames[index]"
           />
         </td>
-        <td class="text-center" style="font-family: monospace; font-size: large">{{ '0x' + item.address.toUpperCase() }}</td>
+        <td class="text-center"
+            style="font-family: monospace; font-size: large"
+            :class="{ 'selected': item === selectedWallet }"
+            @click="accountClicked(item)">{{ '0x' + item.address.toUpperCase()
+          }}</td>
         <td class="text-center">{{ item.balance }}</td>
         <td class="text-center">
           <VBtn

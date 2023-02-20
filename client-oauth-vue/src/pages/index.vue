@@ -197,7 +197,7 @@ const numberRule = val => {
 }
 
 function onClickedAccount(account) {
-  alert(JSON.stringify(store.getters.doneTodos))
+  store.commit("cahngeUseWallet", account)
 }
 
 //const selectedAddress = walletTable.value[selectedWallet].address;
