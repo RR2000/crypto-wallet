@@ -4,13 +4,8 @@ import {ref, onMounted} from 'vue'
 import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
 import {cryptoUser, web3} from "@/plugins/crypto-user-utils"
 import AccountsTable from "@/views/my-wallet/AccountsTable.vue"
-
-function chainUrl(arg) {
-  if (arg === 0)
-    return 'http://localhost:8545'
-  else if (arg === 1)
-    return 'https://bsc-dataseed1.binance.org:443'
-}
+import {useStore} from "vuex";
+import {store} from "@/plugins/store";
 
 //useStore().commit('setSelectedAddress', 'address')
 //let address = useStore().getters.selectedAddress
@@ -37,7 +32,7 @@ async function updateAccountNames() {
   try {
     const myRemoteWallet = await cryptoUser.retrieveEncryptedWallet()
     await cryptoUser.updateRemoteNames(myRemoteWallet, accountNames.value)
-  }catch (e) {
+  } catch (e) {
     alert("error while updating account: " + e)
   }
   isLoading.value = false
@@ -57,7 +52,7 @@ async function refreshMyWalletTable() {
         balance: parseFloat(balanceInEther).toFixed(15),
       }
     }))
-  }catch (err){
+  } catch (err) {
     alert("error while refreshing table: " + err)
   }
   isLoading.value = false
@@ -72,7 +67,7 @@ async function createAccount(password) {
     await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
     await refreshMyWalletTable()
     cancelAllDialog()
-  }catch (e) {
+  } catch (e) {
     alert("error while creating account: " + e)
   }
   isLoading.value = false
@@ -89,7 +84,7 @@ async function deleteAccount(password) {
 
     await refreshMyWalletTable()
     cancelAllDialog()
-  }catch (e) {
+  } catch (e) {
     alert("error while deleting account: " + e)
   }
   isLoading.value = false
@@ -109,7 +104,7 @@ async function addPrivateKeyFromMnemonic(password) {
     await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
     await refreshMyWalletTable()
     cancelAllDialog()
-  }catch (e){
+  } catch (e) {
     alert("error while adding from mnemonic " + e)
   }
   isLoading.value = false
@@ -146,6 +141,7 @@ function askMnemonic() {
 }
 
 let walletAddress
+
 function askPrivateKey(clickedWallet) {
   walletAddress = clickedWallet
   showPrivateKeyPasswordDialog.value = true
@@ -178,7 +174,7 @@ async function showPrivateKey(password) {
       }
     }
     cancelAllDialog()
-  }catch (e) {
+  } catch (e) {
     alert(e)
   }
   isLoading.value = false
@@ -196,12 +192,12 @@ const numberRule = val => {
   } else if (!Number.isInteger(val)) {
     return 'Il numero deve essere intero!'
   }
-  
+
   return true
 }
 
-function onClickedAccount(account){
-
+function onClickedAccount(account) {
+  alert(JSON.stringify(store.getters.doneTodos))
 }
 
 //const selectedAddress = walletTable.value[selectedWallet].address;
