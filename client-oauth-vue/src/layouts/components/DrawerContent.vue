@@ -19,7 +19,7 @@ try {
     isLogged.value = user !== null
   })
 }catch (e) {
-  isLogged.value = true
+  isLogged.value = false
 }
 </script>
 
@@ -43,11 +43,12 @@ try {
 
   <!-- 👉 Nav items -->
   <ul>
+    <VerticalNavSectionTitle :item="{ heading: 'Pages' }"/>
     <VerticalNavLink
       :item="{
         title: 'Home Page',
         to: 'index',
-        icon: { icon: 'mdi-wallet-outline' }
+        icon: { icon: 'mdi-home-outline' }
       }"
     />
     <VerticalNavLink
@@ -67,7 +68,6 @@ try {
       }"
     />
     <!-- 👉 Pages -->
-    <VerticalNavSectionTitle :item="{ heading: 'Pages' }"/>
     <VerticalNavLink
       v-if="!isLogged"
       :item="{
@@ -76,77 +76,7 @@ try {
         icon: { icon: 'mdi-login' }
       }"
     />
-
-    <!-- ℹ️ This path doesn't exist so 404 route will catch this undefined path -->
-    <VerticalNavLink
-      :item="{
-        title: 'Error',
-        to: { path: '/error' },
-        target: '_blank',
-        icon: { icon: 'mdi-alert-circle-outline' }
-      }"
-    />
-
-    <!-- 👉 User Interface -->
-    <VerticalNavSectionTitle :item="{ heading: 'User Interface' }"/>
-    <VerticalNavLink
-      :item="{
-        title: 'Dashboard',
-        to: 'dashboard',
-        icon: { icon: 'mdi-home-outline' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
-        title: 'Typography',
-        to: 'typography',
-        icon: { icon: 'mdi-alpha-t-box-outline' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
-        title: 'Icons',
-        to: 'icons',
-        icon: { icon: 'mdi-eye-outline' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
-        title: 'Cards',
-        to: 'card-basic',
-        icon: { icon: 'mdi-credit-card-outline' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
-        title: 'Tables',
-        to: 'tables',
-        icon: { icon: 'mdi-table' }
-      }"
-    />
-    <VerticalNavLink
-      :item="{
-        title: 'Form Layouts',
-        to: 'form-layouts',
-        icon: { icon: 'mdi-form-select' }
-      }"
-    />
   </ul>
-
-  <!-- 👉 illustration -->
-  <a
-    href="https://themeselection.com/item/materio-vuetify-vuejs-admin-template"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <img
-      :src="upgradeBanner"
-      alt="upgrade-banner"
-      transition="scale-transition"
-      class="upgrade-banner mx-auto"
-      style="max-width: 230px"
-    >
-  </a>
 </template>
 
 <style lang="scss">

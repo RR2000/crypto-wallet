@@ -39,8 +39,16 @@ function chainUrl(arg) {
 export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 
 class CryptoUserUtils {
+  async logoutSilent(param){
+    await userManager.logoutSilent(param)
+  }
+
   async getUserManager() {
     return userManager
+  }
+
+  async removeUser(){
+    await userManager.removeUser()
   }
 
   async signinRedirect() {

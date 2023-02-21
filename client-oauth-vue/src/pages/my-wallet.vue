@@ -270,7 +270,7 @@ function onClickedAccount(account) {
               />
             </VCol>
           </VRow>
-          <VRow>
+          <VRow v-if="false">
             <VCol>
               <VTextField
                 v-model="mnemonicIndex"

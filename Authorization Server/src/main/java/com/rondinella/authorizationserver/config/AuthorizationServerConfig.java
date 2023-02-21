@@ -37,6 +37,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import static org.springframework.security.config.Customizer.withDefaults;
+
 
 import java.util.UUID;
 import java.util.function.Function;
@@ -121,9 +123,10 @@ public class AuthorizationServerConfig {
 
         // Form login handles the redirect to the login page from the
         // authorization server filter chain
-        .formLogin()
-        .loginPage("/login")
-        .permitAll();
+        //.formLogin()
+        .formLogin(withDefaults());
+        //.loginPage("/login")
+        //.permitAll();
 
     http.cors().configurationSource(corsConfigurationSource);
     
