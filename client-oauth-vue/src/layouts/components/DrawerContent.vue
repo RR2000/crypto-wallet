@@ -13,13 +13,13 @@ const vuetifyTheme = useTheme()
 const upgradeBanner = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? upgradeBannerLight : upgradeBannerDark
 })
-let showLogin = ref(true)
+let isLogged = ref(false)
 try {
   cryptoUser.getUserInfo().then(function (user) {
-    showLogin.value = user === null
+    isLogged.value = user !== null
   })
 }catch (e) {
-  showLogin.value = false
+  isLogged.value = true
 }
 </script>
 
@@ -45,12 +45,21 @@ try {
   <ul>
     <VerticalNavLink
       :item="{
-        title: 'Il mio wallet',
+        title: 'Home Page',
         to: 'index',
         icon: { icon: 'mdi-wallet-outline' }
       }"
     />
     <VerticalNavLink
+      v-if="isLogged"
+      :item="{
+        title: 'Il mio wallet',
+        to: 'my-wallet',
+        icon: { icon: 'mdi-wallet-outline' }
+      }"
+    />
+    <VerticalNavLink
+      v-if="isLogged"
       :item="{
         title: 'Impostazioni Account',
         to: 'account-settings',
@@ -60,7 +69,7 @@ try {
     <!-- 👉 Pages -->
     <VerticalNavSectionTitle :item="{ heading: 'Pages' }"/>
     <VerticalNavLink
-      v-if="showLogin"
+      v-if="!isLogged"
       :item="{
         title: 'Login',
         to: 'login',
