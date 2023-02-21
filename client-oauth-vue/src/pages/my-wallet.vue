@@ -169,13 +169,14 @@ async function showPrivateKey(password) {
         web3.utils.toChecksumAddress(walletAddress)
       ) {
         privateKeyToShow.value = myRemoteWallet[i].privateKey
+        showPrivateKeyDialog.value = true
         break
       }
     }
-    cancelAllDialog()
   } catch (e) {
     alert(e)
   }
+  showPrivateKeyPasswordDialog.value = false
   isLoading.value = false
 }
 

@@ -36,7 +36,7 @@ function chainUrl(arg) {
   }
 }
 
-export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
+export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 
 class CryptoUserUtils {
   async getUserManager() {
@@ -137,8 +137,8 @@ class CryptoUserUtils {
 
     try {
       let decryptedWallet = await this.retrieveDecryptedWallet(currentPassword)
-      await this.updateRemoteWallet(decryptedWallet, newPassword)
-
+      let names = await this.retrieveNames()
+      await this.updateRemoteWallet(decryptedWallet,names, newPassword)
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
 
@@ -149,9 +149,9 @@ class CryptoUserUtils {
       await axios.post('http://127.0.0.1:9000/changePassword', formData)
     } catch (error) {
       if (error.response) {
-        alert(`Error changing password: ${error.response.data.message}`)
+        alert(`Error changing password on server : ${error.response.data.message}`)
       } else {
-        alert(`Error changing password: ${error.message}`)
+        alert(`Error changing password on wallet : ${error.message}`)
       }
     }
   }
