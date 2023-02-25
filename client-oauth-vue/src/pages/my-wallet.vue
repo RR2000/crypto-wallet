@@ -112,13 +112,17 @@ async function addPrivateKeyFromMnemonic(password) {
 // Add a new private key to the wallet
 async function addPrivateKey(password) {
   isLoading.value = true
-  const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
+  try {
+    const myRemoteWallet = await cryptoUser.retrieveDecryptedWallet(password)
 
-  myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
+    myRemoteWallet.add(web3.eth.accounts.privateKeyToAccount(newPrivateKey.value))
 
-  await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
-  await refreshMyWalletTable()
-  cancelAllDialog()
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
+    await refreshMyWalletTable()
+    cancelAllDialog()
+  }catch (e) {
+    alert("error during add private key: " + e)
+  }
   isLoading.value = false
 }
 
