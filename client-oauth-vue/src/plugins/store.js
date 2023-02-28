@@ -1,23 +1,47 @@
 import {createStore} from "vuex";
 import {cryptoUser, web3} from "@/plugins/crypto-user-utils";
 
-let encrypted = await cryptoUser.retrieveEncryptedWallet()
-let index = await cryptoUser.getIndexWallet()
 
 //this.state.inUseWallet.address = encrypted.at(await cryptoUser.getIndexWallet()).address
 //this.state.inUseWallet.balance = await web3.eth.getBalance(this.state.inUseWallet.address)
 
-export const store = createStore({
-  state: {
-    inUseWallet: {
+let isLogged = ref(false)
+try {
+  cryptoUser.getUserInfo().then(function (user) {
+    isLogged.value = user !== null
+  })
+} catch (e) {
+  isLogged.value = false
+}
+
+async function pippo() {
+  let inUseWallet
+  if (isLogged.value) {
+    let encrypted = await cryptoUser.retrieveEncryptedWallet()
+    let index = await cryptoUser.getIndexWallet()
+
+    inUseWallet = {
       index: index,
       address: encrypted.at(index).address,
       balance: await web3.eth.getBalance(encrypted.at(index).address)
     }
+  }
+  else
+    inUseWallet = {
+      index: 0,
+      address: "",
+      balance: ""
+    }
+
+  return inUseWallet
+}
+
+export const store = createStore({
+  state: {
+    inUseWallet: await pippo()
   },
   getters: {
     inUseWallet(state) {
-      alert(JSON.stringify(state.inUseWallet))
       return state.inUseWallet
     }
   },
