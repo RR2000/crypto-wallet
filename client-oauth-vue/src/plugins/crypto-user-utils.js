@@ -33,10 +33,14 @@ function chainUrl(arg) {
     return 'http://localhost:8545'
   } else if (arg === 1) {
     return 'https://bsc-dataseed1.binance.org:443'
+  }else if (arg === 2) {
+    return 'http://127.0.0.1:8545'
+  }else{
+    throw("not a valid id for the address")
   }
 }
 
-export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
+export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(2)))
 
 class CryptoUserUtils {
   async logoutSilent(param){

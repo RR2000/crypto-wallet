@@ -120,8 +120,8 @@ async function addPrivateKey(password) {
     await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value, password)
     await refreshMyWalletTable()
     cancelAllDialog()
-  }catch (e) {
-    alert("error during add private key: " + e)
+  } catch (e) {
+    alert("error while adding private key " + e)
   }
   isLoading.value = false
 }
