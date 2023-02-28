@@ -17,16 +17,19 @@ try {
 async function pippo() {
   let inUseWallet
 
-  try{
+  try {
     let encrypted = await cryptoUser.retrieveEncryptedWallet()
     let index = await cryptoUser.getIndexWallet()
+    const balance = await web3.eth.getBalance(encrypted.at(index).address)
+    const balanceInEther = web3.utils.fromWei(balance, 'ether')
+    const balanceString = parseFloat(balanceInEther).toFixed(15)
 
     inUseWallet = {
       index: index,
       address: encrypted.at(index).address,
-      balance: await web3.eth.getBalance(encrypted.at(index).address)
+      balance: balanceString
     }
-  }catch (e) {
+  } catch (e) {
     inUseWallet = {
       index: 0,
       address: "",
@@ -53,7 +56,10 @@ export const store = createStore({
 
       state.inUseWallet.index = await cryptoUser.getIndexWallet()
       state.inUseWallet.address = encrypted.at(await cryptoUser.getIndexWallet()).address
-      state.inUseWallet.balance = await web3.eth.getBalance(state.inUseWallet.address)
+
+      const balance = await web3.eth.getBalance(state.inUseWallet.address)
+      const balanceInEther = web3.utils.fromWei(balance, 'ether')
+      state.inUseWallet.balance = parseFloat(balanceInEther).toFixed(15)
 
       return state.inUseWallet
     }

@@ -46,10 +46,11 @@ async function refreshMyWalletTable() {
     walletTable.value = await Promise.all(encryptedWallet.map(async wallet => {
       const balance = await web3.eth.getBalance(wallet["address"])
       const balanceInEther = web3.utils.fromWei(balance, 'ether')
+      const balanceString = parseFloat(balanceInEther).toFixed(15)
 
       return {
         address: wallet.address,
-        balance: parseFloat(balanceInEther).toFixed(15),
+        balance: balanceString,
       }
     }))
   } catch (err) {
@@ -202,7 +203,7 @@ const numberRule = val => {
 }
 
 async function onClickedAccount(item, index) {
-  store.commit("cahngeUseWallet", index)
+  await store.commit("cahngeUseWallet", index)
 }
 
 //const selectedAddress = walletTable.value[selectedWallet].address;
