@@ -10,8 +10,10 @@
       <VCardText>
         <VTextField
           v-model="password"
+          :type="isPasswordVisible ? 'text' : 'password'"
+          :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
           label="Password"
-          type="password"
+          @click:append-inner="isPasswordVisible = !isPasswordVisible"
         />
       </VCardText>
       <VCardActions>
@@ -45,16 +47,19 @@ export default {
     return {
       dialog: false,
       password: '',
+      isPasswordVisible: false
     }
   },
   methods: {
     confirm() {
       this.dialog = false
+      this.isPasswordVisible = false
       this.$emit('confirm', this.password)
       this.password = ''
     },
     cancel() {
       this.dialog = false
+      this.isPasswordVisible = false
       this.$emit('cancel')
       this.password = ''
     },
