@@ -84,3 +84,5 @@ nb-configuration.xml
 .DS_Store
 /Authorization Server/HELP.md
 /Client OAuth/HELP.md
+/client-oauth-vue/package-lock.json
+/client-oauth-vue/yarn.lock

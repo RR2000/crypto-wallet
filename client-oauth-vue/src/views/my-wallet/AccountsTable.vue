@@ -25,8 +25,8 @@
       <td style="width: 0;">
         <VRadioGroup v-model="radios">
           <VRadio
-            :value="item"
-            @click="accountClicked(item)"/>
+            :value="index"
+            @click="accountClicked(item, index)"/>
         </VRadioGroup>
       </td>
       <td class="text-center" style="width: 25%; min-width: 25%">
@@ -36,7 +36,7 @@
       </td>
       <td class="text-center"
           style="font-family: monospace; font-size: large"
-          :class="{ 'selected': item === selectedWallet }">{{
+          :class="{ 'selected': item === selectedWallet.address }">{{
           '0x' + item.address.toUpperCase()
         }}
       </td>
@@ -60,6 +60,8 @@
 </template>
 
 <script>
+import {store} from "@/plugins/store";
+
 export default {
   props: {
     radios: "",
@@ -74,13 +76,13 @@ export default {
   },
   data() {
     return {
-      selectedWallet: null,
+      selectedWallet: store.getters.inUseWallet,
     }
   },
   methods: {
-    accountClicked(item) {
-      this.selectedWallet = item
-      this.$emit('account-clicked', item)
+    accountClicked(item, index) {
+      this.$emit('account-clicked', item, index)
+      this.selectedWallet = store.getters.inUseWallet
     },
     updateAccountNames() {
       this.$emit('update-account-names', this.accountNames)

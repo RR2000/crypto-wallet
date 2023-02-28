@@ -1,6 +1,6 @@
 <script setup>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
-import {cryptoUser, web3} from "@/plugins/crypto-user-utils";
+import {cryptoUser} from "@/plugins/crypto-user-utils";
 import {store} from "@/plugins/store";
 
 let accountDataLocal = ref('')
@@ -38,7 +38,7 @@ const avatarBadgeProps = {
 <template>
   <VBadge v-bind="avatarBadgeProps">
     <VLabel>
-      {{store.getters.inUseWallet.balance + " ETH"}}
+      {{ store.getters.inUseWallet.balance + " ETH"}}
     </VLabel>
     <VAvatar
       style="cursor: pointer;"

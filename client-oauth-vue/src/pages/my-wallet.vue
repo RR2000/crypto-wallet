@@ -30,7 +30,8 @@ async function updateAccountNames() {
   isLoading.value = true
   try {
     const myRemoteWallet = await cryptoUser.retrieveEncryptedWallet()
-    await cryptoUser.updateRemoteNames(myRemoteWallet, accountNames.value)
+    alert(JSON.stringify(myRemoteWallet))
+    await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value)
   } catch (e) {
     alert("error while updating account: " + e)
   }
@@ -200,8 +201,8 @@ const numberRule = val => {
   return true
 }
 
-function onClickedAccount(account) {
-  store.commit("cahngeUseWallet", account)
+async function onClickedAccount(item, index) {
+  store.commit("cahngeUseWallet", index)
 }
 
 //const selectedAddress = walletTable.value[selectedWallet].address;
