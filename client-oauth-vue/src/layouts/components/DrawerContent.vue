@@ -10,9 +10,7 @@ import {useTheme} from 'vuetify'
 import {cryptoUser} from "@/plugins/crypto-user-utils";
 
 const vuetifyTheme = useTheme()
-const upgradeBanner = computed(() => {
-  return vuetifyTheme.global.name.value === 'light' ? upgradeBannerLight : upgradeBannerDark
-})
+
 let isLogged = ref(false)
 try {
   cryptoUser.getUserInfo().then(function (user) {

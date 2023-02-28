@@ -16,7 +16,8 @@ try {
 
 async function pippo() {
   let inUseWallet
-  if (isLogged.value) {
+
+  try{
     let encrypted = await cryptoUser.retrieveEncryptedWallet()
     let index = await cryptoUser.getIndexWallet()
 
@@ -25,14 +26,13 @@ async function pippo() {
       address: encrypted.at(index).address,
       balance: await web3.eth.getBalance(encrypted.at(index).address)
     }
-  }
-  else
+  }catch (e) {
     inUseWallet = {
       index: 0,
       address: "",
       balance: ""
     }
-
+  }
   return inUseWallet
 }
 

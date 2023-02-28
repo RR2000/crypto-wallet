@@ -36,7 +36,7 @@
       </td>
       <td class="text-center"
           style="font-family: monospace; font-size: large"
-          :class="{ 'selected': item === selectedWallet.address }">{{
+          :class="{ 'selected': index === selectedWallet.index }">{{
           '0x' + item.address.toUpperCase()
         }}
       </td>
