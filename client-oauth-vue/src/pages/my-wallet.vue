@@ -30,7 +30,6 @@ async function updateAccountNames() {
   isLoading.value = true
   try {
     const myRemoteWallet = await cryptoUser.retrieveEncryptedWallet()
-    alert(JSON.stringify(myRemoteWallet))
     await cryptoUser.updateRemoteWallet(myRemoteWallet, accountNames.value)
   } catch (e) {
     alert("error while updating account: " + e)

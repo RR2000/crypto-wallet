@@ -40,7 +40,7 @@ function chainUrl(arg) {
   }
 }
 
-export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(2)))
+export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 
 class CryptoUserUtils {
   async logoutSilent(param){
