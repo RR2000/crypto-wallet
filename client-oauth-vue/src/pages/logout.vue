@@ -8,7 +8,6 @@ import axios from "axios"
   //  id_token_hint: user?.id_token
 //})
 await cryptoUser.signoutSilent()
-window.location.href = '/'
 //cryptoUser.removeUser()
 //axios.defaults.headers.common['Authorization'] = null
 //

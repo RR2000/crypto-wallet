@@ -1,29 +1,25 @@
-<script setup>
+<script>
 import avatar1 from '@/assets/images/avatars/avatar-1.png'
 import {cryptoUser} from "@/plugins/crypto-user-utils";
 import {store} from "@/plugins/store";
 
 let accountDataLocal = ref('')
 
-computed({
-  account() {
-    return store.getters.inUseWallet
-  }
-})
+let user = await cryptoUser.getUserInfo()
+let isLogged = (user !== null)
 
-cryptoUser.getUserInfo().then(
-  async function (user) {
-    accountDataLocal.value = {
-      avatarImg: avatar1,
-      name: user.name,
-      firstName: user.given_name,
-      lastName: user.family_name,
-      email: user.email,
-      phone: user.phone_number,
-      address: user.address
-    }
-  },
-)
+if (isLogged) {
+  accountDataLocal.value = {
+    avatarImg: avatar1,
+    name: user.name,
+    firstName: user.given_name,
+    lastName: user.family_name,
+    email: user.email,
+    phone: user.phone_number,
+    address: user.address
+  }
+}
+
 
 const avatarBadgeProps = {
   dot: true,
@@ -33,12 +29,25 @@ const avatarBadgeProps = {
   color: 'success',
   bordered: true,
 }
+
+export default {
+  data() {
+    return {
+      store,
+      accountDataLocal,
+      avatar1,
+      avatarBadgeProps
+    }
+  }
+}
+
+
 </script>
 
 <template>
   <VBadge v-bind="avatarBadgeProps">
     <VLabel>
-      {{ store.getters.inUseWallet.balance + " ETH"}}
+      {{ store.getters.inUseWallet.balance + " ETH" }}
     </VLabel>
     <VAvatar
       style="cursor: pointer;"
@@ -58,7 +67,7 @@ const avatarBadgeProps = {
           <!-- 👉 User Avatar & Name -->
           <VListItem>
             <template #prepend>
-              <VListItemAction start>
+              <VListItemAction>
                 <VBadge v-bind="avatarBadgeProps">
                   <VAvatar
                     color="primary"

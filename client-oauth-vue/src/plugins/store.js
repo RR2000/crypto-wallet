@@ -6,30 +6,28 @@ import {cryptoUser, web3} from "@/plugins/crypto-user-utils";
 //this.state.inUseWallet.balance = await web3.eth.getBalance(this.state.inUseWallet.address)
 
 let isLogged = ref(false)
-try {
-  cryptoUser.getUserInfo().then(function (user) {
-    isLogged.value = user !== null
-  })
-} catch (e) {
-  isLogged.value = false
-}
+let user = await cryptoUser.getUserInfo()
+isLogged.value = (user !== null)
 
-async function pippo() {
+async function retriveWalletInUse() {
   let inUseWallet
+  if (isLogged.value === true) {
+    try {
+      let encrypted = await cryptoUser.retrieveEncryptedWallet()
+      let index = await cryptoUser.getIndexWallet()
+      const balance = await web3.eth.getBalance(encrypted.at(index).address)
+      const balanceInEther = web3.utils.fromWei(balance, 'ether')
+      const balanceString = parseFloat(balanceInEther).toFixed(15)
 
-  try {
-    let encrypted = await cryptoUser.retrieveEncryptedWallet()
-    let index = await cryptoUser.getIndexWallet()
-    const balance = await web3.eth.getBalance(encrypted.at(index).address)
-    const balanceInEther = web3.utils.fromWei(balance, 'ether')
-    const balanceString = parseFloat(balanceInEther).toFixed(15)
-
-    inUseWallet = {
-      index: index,
-      address: encrypted.at(index).address,
-      balance: balanceString
+      inUseWallet = {
+        index: index,
+        address: encrypted.at(index).address,
+        balance: balanceString
+      }
+    } catch (e) {
+      console.error(e)
     }
-  } catch (e) {
+  }else {
     inUseWallet = {
       index: 0,
       address: "",
@@ -41,7 +39,7 @@ async function pippo() {
 
 export const store = createStore({
   state: {
-    inUseWallet: await pippo()
+    inUseWallet: await retriveWalletInUse()
   },
   getters: {
     inUseWallet(state) {
@@ -51,16 +49,19 @@ export const store = createStore({
   mutations: {
     async cahngeUseWallet(state, index) {
       //buggato più di me
-      let encrypted = await cryptoUser.retrieveEncryptedWallet()
-      await cryptoUser.changeInUseWalletIndex(index)
+      try {
+        let encrypted = await cryptoUser.retrieveEncryptedWallet()
+        await cryptoUser.changeInUseWalletIndex(index)
 
-      state.inUseWallet.index = await cryptoUser.getIndexWallet()
-      state.inUseWallet.address = encrypted.at(await cryptoUser.getIndexWallet()).address
+        state.inUseWallet.index = await cryptoUser.getIndexWallet()
+        state.inUseWallet.address = encrypted.at(await cryptoUser.getIndexWallet()).address
 
-      const balance = await web3.eth.getBalance(state.inUseWallet.address)
-      const balanceInEther = web3.utils.fromWei(balance, 'ether')
-      state.inUseWallet.balance = parseFloat(balanceInEther).toFixed(15)
-
+        const balance = await web3.eth.getBalance(state.inUseWallet.address)
+        const balanceInEther = web3.utils.fromWei(balance, 'ether')
+        state.inUseWallet.balance = parseFloat(balanceInEther).toFixed(15)
+      } catch (e) {
+        console.error("error while changing wallet account: ", e)
+      }
       return state.inUseWallet
     }
   }

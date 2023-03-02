@@ -17,6 +17,7 @@ export const settings = {
 
 const userManager = new UserManager(settings)
 
+
 userManager.signinCallback().then(
   function (user) {
     axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
@@ -24,11 +25,13 @@ userManager.signinCallback().then(
   },
 )
 
-userManager.signoutSilentCallback("/").then(
+/*
+userManager.signoutSilentCallback().then(
   function (){
     axios.defaults.headers.common['Authorization'] = ""
+    window.location.href = '/'
   }
-)
+)*/
 
 function comparePasswordHash(inputPassword, hash) {
   return bcrypt.compareSync(inputPassword, hash)
@@ -39,9 +42,9 @@ function chainUrl(arg) {
     return 'http://localhost:8545'
   } else if (arg === 1) {
     return 'https://bsc-dataseed1.binance.org:443'
-  }else if (arg === 2) {
+  } else if (arg === 2) {
     return 'http://127.0.0.1:8545'
-  }else{
+  } else {
     throw("not a valid id for the address")
   }
 }
@@ -49,16 +52,18 @@ function chainUrl(arg) {
 export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 
 class CryptoUserUtils {
-  async signoutSilent(){
-    await userManager.signoutSilent()
-  }
 
-  async getUserManager() {
-    return userManager
-  }
+  async signoutSilent() {
+    try {
+      await userManager.signoutRedirect()
+      await userManager.removeUser()
+      await userManager.revokeTokens()
+    } catch (e) {
+      console.log(e)
+    } finally {
+      window.location.href = '/'
+    }
 
-  async removeUser(){
-    await userManager.removeUser()
   }
 
   async signinRedirect() {
@@ -85,20 +90,30 @@ class CryptoUserUtils {
   }
 
   async getUserInfo() {
-    let user = await userManager.getUser()
+    try {
+      let user = await userManager.getUser()
 
-    if (user !== null)
-      return user.profile
-    else
-      return null
+      if (user !== null) {
+        axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
+        return user.profile
+      }
+      else
+        return null
+    } catch (e) {
+      console.error("errror while getting user info:", e)
+    }
   }
 
   async retrieveEncryptedWallet() {
     const user = await this.getUserInfo()
     if (user === null)
       return []
-    else
+    else {
+      console.log("Wallet encrypted: ", JSON.parse(user['private_keys'])[0])
       return JSON.parse(user['private_keys'])[0]
+    }
+
+
   }
 
   async retrieveDecryptedWallet(password) {
@@ -110,7 +125,7 @@ class CryptoUserUtils {
       throw "La password non corrisponde con quella dell'account"
     }
     const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password)
-    console.log("retrieveDecryptedWallet dec ", decryptedWallet)
+    console.log("Wallet decrypted: ", decryptedWallet)
 
     return decryptedWallet
   }
@@ -123,37 +138,27 @@ class CryptoUserUtils {
       if (names[i] == null || names[i].match(/^ *$/) !== null)
         names[i] = ("Account " + (i + 1))
     }
-    console.log("retrieveNames", names, walletLenght)
 
     return names
   }
 
-  async getBalance(nWallet) {
-    const encryptedWallet = await cryptoUser.retrieveEncryptedWallet()
-
-    const balance = await web3.eth.getBalance(encryptedWallet[nWallet].address)
-    const balanceInEther = web3.utils.fromWei(balance, 'ether')
-
-    return parseFloat(balanceInEther).toFixed(15) + " ETH"
-  }
-
-  async getIndexWallet(){
+  async getIndexWallet() {
     const user = await this.getUserInfo()
-    if(JSON.parse(user['private_keys'])[2].length === 0)
+    if (JSON.parse(user['private_keys'])[2].length === 0)
       return 0
     else
       return JSON.parse(user['private_keys'])[2]
   }
 
   index
-  async changeInUseWalletIndex(index){
+  async changeInUseWalletIndex(index) {
     this.index = index
-    await this.updateRemoteWallet(await this.retrieveEncryptedWallet(),await this.retrieveNames())
+    await this.updateRemoteWallet(await this.retrieveEncryptedWallet(), await this.retrieveNames())
   }
 
   async updateRemoteWallet(wallet, accountNames, password) {
     let encryptedWallet
-    if(password !== undefined)
+    if (password !== undefined)
       encryptedWallet = await wallet.encrypt(password)
     else
       encryptedWallet = wallet
@@ -164,14 +169,14 @@ class CryptoUserUtils {
     await this.signinSilent()
     try {
       const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
-      console.log('Private key added:', response)
+      console.log('remote wallet updated: ', response)
     } catch (error) {
-      console.error('Error adding private key:', error)
+      console.error('errore while updating wallet: ', error)
     }
   }
 
   async changePassword(currentPassword, newPassword) {
-    const user = await this.getUserInfo()
+    const user = await this.signinSilent()
     if (!comparePasswordHash(currentPassword, user.password)) {
       throw ('Wrong password.')
     }
@@ -179,7 +184,7 @@ class CryptoUserUtils {
     try {
       let decryptedWallet = await this.retrieveDecryptedWallet(currentPassword)
       let names = await this.retrieveNames()
-      await this.updateRemoteWallet(decryptedWallet,names, newPassword)
+      await this.updateRemoteWallet(decryptedWallet, names, newPassword)
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
 
