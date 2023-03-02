@@ -55,9 +55,13 @@ class CryptoUserUtils {
 
   async signoutSilent() {
     try {
-      await userManager.signoutRedirect()
-      await userManager.removeUser()
-      await userManager.revokeTokens()
+      userManager.revokeTokens("refresh_token").then(
+        userManager.removeUser().then(
+          userManager.signoutSilent().then(
+            () => userManager.stopSilentRenew()
+          )
+        )
+      )
     } catch (e) {
       console.log(e)
     } finally {
@@ -96,8 +100,7 @@ class CryptoUserUtils {
       if (user !== null) {
         axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
         return user.profile
-      }
-      else
+      } else
         return null
     } catch (e) {
       console.error("errror while getting user info:", e)
@@ -151,6 +154,7 @@ class CryptoUserUtils {
   }
 
   index
+
   async changeInUseWalletIndex(index) {
     this.index = index
     await this.updateRemoteWallet(await this.retrieveEncryptedWallet(), await this.retrieveNames())
@@ -166,10 +170,12 @@ class CryptoUserUtils {
     const formData = new FormData()
     formData.append('private_key', JSON.stringify([encryptedWallet, accountNames, this.index]))
 
-    await this.signinSilent()
     try {
-      const response = await axios.post('http://127.0.0.1:9000/updateWallet', formData)
-      console.log('remote wallet updated: ', response)
+      await axios.post('http://127.0.0.1:9000/updateWallet', formData)
+      console.log('remote wallet updated: ', JSON.parse(formData.get('private_key')))
+
+      let user = await userManager.signinSilent()
+      axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
     } catch (error) {
       console.error('errore while updating wallet: ', error)
     }

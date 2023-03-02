@@ -47,14 +47,14 @@ export const store = createStore({
     }
   },
   mutations: {
-    async cahngeUseWallet(state, index) {
-      //buggato più di me
+    async changeUseWallet(state, index) {
       try {
         let encrypted = await cryptoUser.retrieveEncryptedWallet()
         await cryptoUser.changeInUseWalletIndex(index)
 
         state.inUseWallet.index = await cryptoUser.getIndexWallet()
-        state.inUseWallet.address = encrypted.at(await cryptoUser.getIndexWallet()).address
+
+        state.inUseWallet.address = encrypted.at(state.inUseWallet.index).address
 
         const balance = await web3.eth.getBalance(state.inUseWallet.address)
         const balanceInEther = web3.utils.fromWei(balance, 'ether')
