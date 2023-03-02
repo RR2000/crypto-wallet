@@ -24,6 +24,12 @@ userManager.signinCallback().then(
   },
 )
 
+userManager.signoutSilentCallback("/").then(
+  function (){
+    axios.defaults.headers.common['Authorization'] = ""
+  }
+)
+
 function comparePasswordHash(inputPassword, hash) {
   return bcrypt.compareSync(inputPassword, hash)
 }
@@ -43,8 +49,8 @@ function chainUrl(arg) {
 export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 
 class CryptoUserUtils {
-  async logoutSilent(param){
-    await userManager.logoutSilent(param)
+  async signoutSilent(){
+    await userManager.signoutSilent()
   }
 
   async getUserManager() {
@@ -79,7 +85,12 @@ class CryptoUserUtils {
   }
 
   async getUserInfo() {
-    return await this.signinSilent()
+    let user = await userManager.getUser()
+
+    if (user !== null)
+      return user.profile
+    else
+      return null
   }
 
   async retrieveEncryptedWallet() {

@@ -7,10 +7,11 @@ import axios from "axios"
 //cryptoUser.getUserManager().signoutSilent({
   //  id_token_hint: user?.id_token
 //})
-cryptoUser.logoutSilent()
-cryptoUser.removeUser()
-axios.defaults.headers.common['Authorization'] = null
+await cryptoUser.signoutSilent()
 window.location.href = '/'
+//cryptoUser.removeUser()
+//axios.defaults.headers.common['Authorization'] = null
+//
 
 
 </script>

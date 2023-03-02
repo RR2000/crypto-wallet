@@ -12,13 +12,10 @@ import {cryptoUser} from "@/plugins/crypto-user-utils";
 const vuetifyTheme = useTheme()
 
 let isLogged = ref(false)
-try {
-  cryptoUser.getUserInfo().then(function (user) {
-    isLogged.value = user !== null
-  })
-}catch (e) {
-  isLogged.value = false
-}
+cryptoUser.getUserInfo().then(function (user) {
+  isLogged.value = user !== null
+})
+
 </script>
 
 <template>
