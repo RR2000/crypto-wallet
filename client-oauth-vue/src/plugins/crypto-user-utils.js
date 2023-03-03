@@ -54,11 +54,11 @@ export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 class CryptoUserUtils {
 
   async signoutSilent() {
-    //await userManager.signoutRedirect()
     try {
       await new UserManager(settings).revokeTokens(["refresh_token", "access_token"])
     }catch (e) {
       await new UserManager(settings).removeUser()
+      await new UserManager(settings).signoutSilent()
       axios.defaults.headers.common['Authorization'] = null;
       window.location.href = '/'
     }
