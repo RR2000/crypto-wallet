@@ -13,23 +13,23 @@ export const settings = {
   loadUserInfo: true,
   scope: "openid profile email wallets.private_keys",
   client_authentication: "client_secret_basic",
+  includeIdTokenInSilentSignout: true,
+  revokeTokensOnSignout: true,
+  revokeTokenTypes: ["refresh_token", "access_token"]
 }
 
 const userManager = new UserManager(settings)
 
-
-userManager.signinCallback().then(
-  function (user) {
-    axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
-    window.location.href = '/'
-  },
-)
+userManager.signinRedirectCallback().then(function (user) {
+  axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`;
+  window.location.href = '/';
+});
 
 /*
 userManager.signoutSilentCallback().then(
   function (){
     axios.defaults.headers.common['Authorization'] = ""
-    window.location.href = '/'
+
   }
 )*/
 
@@ -54,20 +54,14 @@ export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
 class CryptoUserUtils {
 
   async signoutSilent() {
+    //await userManager.signoutRedirect()
     try {
-      userManager.revokeTokens("refresh_token").then(
-        userManager.removeUser().then(
-          userManager.signoutSilent().then(
-            () => userManager.stopSilentRenew()
-          )
-        )
-      )
-    } catch (e) {
-      console.log(e)
-    } finally {
+      await new UserManager(settings).revokeTokens(["refresh_token", "access_token"])
+    }catch (e) {
+      await new UserManager(settings).removeUser()
+      axios.defaults.headers.common['Authorization'] = null;
       window.location.href = '/'
     }
-
   }
 
   async signinRedirect() {

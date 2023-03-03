@@ -60,7 +60,8 @@ public class AuthorizationServerConfig {
   @Order(Ordered.HIGHEST_PRECEDENCE)
   public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
                                                                     CryptoUserDetailsService service,
-                                                                    CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                                                    CorsConfigurationSource corsConfigurationSource,
+                                                                    RegisteredClientRepository registeredClientRepository) throws Exception {
     OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
         new OAuth2AuthorizationServerConfigurer();
     RequestMatcher endpointsMatcher = authorizationServerConfigurer
@@ -74,6 +75,7 @@ public class AuthorizationServerConfig {
     };
 
     authorizationServerConfigurer
+        .tokenRevocationEndpoint(withDefaults())
         .oidc((oidc) -> oidc
             .userInfoEndpoint((userInfo) -> userInfo
                 .userInfoMapper(userInfoMapper)
