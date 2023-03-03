@@ -1,13 +1,9 @@
 import {createStore} from "vuex";
 import {cryptoUser, web3} from "@/plugins/crypto-user-utils";
 
-
-//this.state.inUseWallet.address = encrypted.at(await cryptoUser.getIndexWallet()).address
-//this.state.inUseWallet.balance = await web3.eth.getBalance(this.state.inUseWallet.address)
-
 let isLogged = ref(false)
 let user = await cryptoUser.getUserInfo()
-isLogged.value = (user !== null)
+isLogged.value = (user !== undefined)
 
 async function retriveWalletInUse() {
   let inUseWallet
@@ -48,6 +44,9 @@ export const store = createStore({
   },
   mutations: {
     async changeUseWallet(state, index) {
+      if(state.inUseWallet === undefined)
+        throw "inUseWallet undefined"
+
       try {
         let encrypted = await cryptoUser.retrieveEncryptedWallet()
         await cryptoUser.changeInUseWalletIndex(index)

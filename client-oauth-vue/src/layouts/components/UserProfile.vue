@@ -6,7 +6,7 @@ import {store} from "@/plugins/store";
 let accountDataLocal = ref('')
 
 let user = await cryptoUser.getUserInfo()
-let isLogged = (user !== null)
+let isLogged = (user !== undefined)
 
 if (isLogged) {
   accountDataLocal.value = {

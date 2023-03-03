@@ -1,9 +1,10 @@
+// @ts-ignore
 import bcrypt from "bcryptjs"
-import {UserManager} from "oidc-client-ts"
+import {IdTokenClaims, UserManager, UserManagerSettings} from "oidc-client-ts"
 import Web3 from "web3"
 import axios from "axios"
 
-export const settings = {
+export const settings: UserManagerSettings = {
   authority: "http://localhost:9000",
   client_id: "crypto-client",
   client_secret: "secret",
@@ -33,11 +34,11 @@ userManager.signoutSilentCallback().then(
   }
 )*/
 
-function comparePasswordHash(inputPassword, hash) {
+function comparePasswordHash(inputPassword: string, hash: string) {
   return bcrypt.compareSync(inputPassword, hash)
 }
 
-function chainUrl(arg) {
+function chainUrl(arg: Number) {
   if (arg === 0) {
     return 'http://localhost:8545'
   } else if (arg === 1) {
@@ -56,10 +57,10 @@ class CryptoUserUtils {
   async signoutSilent() {
     try {
       await new UserManager(settings).revokeTokens(["refresh_token", "access_token"])
-    }catch (e) {
+    } catch (e) {
       await new UserManager(settings).removeUser()
-      await new UserManager(settings).signoutSilent()
-      axios.defaults.headers.common['Authorization'] = null;
+      //await new UserManager(settings).signoutSilent()
+      axios.defaults.headers.common['Authorization'] = false;
       window.location.href = '/'
     }
   }
@@ -72,11 +73,12 @@ class CryptoUserUtils {
     }
   }
 
-  async signinSilent() {
+  async signinSilent(): Promise<IdTokenClaims | undefined> {
     let user = null
     try {
       user = await userManager.signinSilent()
-      axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
+      if (user !== null)
+        axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
     } catch (error) {
       console.error('Error during sign-in:', error)
     }
@@ -84,18 +86,18 @@ class CryptoUserUtils {
     if (user !== null)
       return user.profile
     else
-      return null
+      return undefined
   }
 
-  async getUserInfo() {
+  async getUserInfo(): Promise<IdTokenClaims | undefined> {
     try {
       let user = await userManager.getUser()
 
-      if (user !== null) {
+      if (user) {
         axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
         return user.profile
       } else
-        return null
+        return undefined
     } catch (e) {
       console.error("errror while getting user info:", e)
     }
@@ -103,21 +105,22 @@ class CryptoUserUtils {
 
   async retrieveEncryptedWallet() {
     const user = await this.getUserInfo()
-    if (user === null)
+    if (user) {
+      console.log("Wallet encrypted: ", JSON.parse(<string>user['private_keys'])[0])
+      return JSON.parse(<string>user['private_keys'])[0]
+    } else {
       return []
-    else {
-      console.log("Wallet encrypted: ", JSON.parse(user['private_keys'])[0])
-      return JSON.parse(user['private_keys'])[0]
     }
-
-
   }
 
-  async retrieveDecryptedWallet(password) {
-    const user = await this.getUserInfo()
+  async retrieveDecryptedWallet(password: string) {
+    const user: IdTokenClaims | undefined = await this.getUserInfo()
     const encryptedWallet = await this.retrieveEncryptedWallet()
 
-    const passwordMatches = comparePasswordHash(password, user.password)
+    let passwordMatches: boolean = false
+    if (user) {
+      passwordMatches = comparePasswordHash(password, <string>user["password"])
+    }
     if (!passwordMatches) {
       throw "La password non corrisponde con quella dell'account"
     }
@@ -129,32 +132,38 @@ class CryptoUserUtils {
 
   async retrieveNames() {
     const user = await this.getUserInfo()
-    let walletLenght = JSON.parse(user["private_keys"])[0].length
-    let names = JSON.parse(user["private_keys"])[1]
-    for (let i = 0; i < walletLenght; i++) {
-      if (names[i] == null || names[i].match(/^ *$/) !== null)
-        names[i] = ("Account " + (i + 1))
+    if (user) {
+      let walletLenght = JSON.parse(<string>user["private_keys"])[0].length
+      let names = JSON.parse(<string>user["private_keys"])[1]
+      for (let i = 0; i < walletLenght; i++) {
+        if (names[i] == null || names[i].match(/^ *$/) !== null)
+          names[i] = ("Account " + (i + 1))
+      }
+
+      return names
     }
 
-    return names
   }
 
   async getIndexWallet() {
     const user = await this.getUserInfo()
-    if (JSON.parse(user['private_keys'])[2].length === 0)
-      return 0
-    else
-      return JSON.parse(user['private_keys'])[2]
+    if (user) {
+      if (JSON.parse(<string>user['private_keys'])[2].length === 0)
+        return 0
+      else
+        return JSON.parse(<string>user['private_keys'])[2]
+    }
+    return 0
   }
 
-  index
+  index: number = 0
 
-  async changeInUseWalletIndex(index) {
+  async changeInUseWalletIndex(index: number) {
     this.index = index
-    await this.updateRemoteWallet(await this.retrieveEncryptedWallet(), await this.retrieveNames())
+    await this.updateRemoteWallet(await this.retrieveEncryptedWallet(), await this.retrieveNames(), undefined)
   }
 
-  async updateRemoteWallet(wallet, accountNames, password) {
+  async updateRemoteWallet(wallet: any, accountNames: any, password: any) {
     let encryptedWallet
     if (password !== undefined)
       encryptedWallet = await wallet.encrypt(password)
@@ -166,19 +175,22 @@ class CryptoUserUtils {
 
     try {
       await axios.post('http://127.0.0.1:9000/updateWallet', formData)
-      console.log('remote wallet updated: ', JSON.parse(formData.get('private_key')))
+      console.log('remote wallet updated: ', JSON.parse(<string>formData.get('private_key')))
 
       let user = await userManager.signinSilent()
-      axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
+      if (user)
+        axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`
     } catch (error) {
       console.error('errore while updating wallet: ', error)
     }
   }
 
-  async changePassword(currentPassword, newPassword) {
-    const user = await this.signinSilent()
-    if (!comparePasswordHash(currentPassword, user.password)) {
-      throw ('Wrong password.')
+  async changePassword(currentPassword: string, newPassword: string) {
+    const user: IdTokenClaims | undefined = await this.signinSilent()
+    if (user) {
+      if (!comparePasswordHash(currentPassword, <string>user.password)) {
+        throw ('Wrong password.')
+      }
     }
 
     try {
@@ -193,7 +205,7 @@ class CryptoUserUtils {
 
       await this.signinSilent()
       await axios.post('http://127.0.0.1:9000/changePassword', formData)
-    } catch (error) {
+    } catch (error: any) {
       if (error.response) {
         alert(`Error changing password on server : ${error.response.data.message}`)
       } else {

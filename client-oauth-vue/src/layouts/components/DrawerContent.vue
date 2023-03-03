@@ -12,7 +12,7 @@ const vuetifyTheme = useTheme()
 
 let isLogged = ref(false)
 cryptoUser.getUserInfo().then(function (user) {
-  isLogged.value = user !== null
+  isLogged.value = user !== undefined
 })
 
 </script>

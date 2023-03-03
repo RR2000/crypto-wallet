@@ -52,7 +52,8 @@
         "shims.d.ts",
         "src/**/*",
         "src/**/*.vue",
-        "themeConfig.ts"
+        "themeConfig.ts",
+        "auto-imports.d.ts"
     ],
     "exclude": [
         "dist",
