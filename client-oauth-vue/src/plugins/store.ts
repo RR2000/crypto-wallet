@@ -1,5 +1,6 @@
 import {createStore} from "vuex";
 import {cryptoUser, web3} from "@/plugins/crypto-user-utils";
+import {EncryptedKeystoreV3Json} from "web3-core";
 
 let isLogged = ref(false)
 let user = await cryptoUser.getUserInfo()
@@ -9,21 +10,25 @@ async function retriveWalletInUse() {
   let inUseWallet
   if (isLogged.value === true) {
     try {
-      let encrypted = await cryptoUser.retrieveEncryptedWallet()
-      let index = await cryptoUser.getIndexWallet()
-      const balance = await web3.eth.getBalance(encrypted.at(index).address)
+      let encrypted: EncryptedKeystoreV3Json[] = await cryptoUser.retrieveEncryptedWallet()
+      let index: number = await cryptoUser.getIndexWallet()
+
+      let thisAccount: EncryptedKeystoreV3Json = <EncryptedKeystoreV3Json>encrypted.at(index)
+
+      const balance = await web3.eth.getBalance(thisAccount.address)
       const balanceInEther = web3.utils.fromWei(balance, 'ether')
       const balanceString = parseFloat(balanceInEther).toFixed(15)
 
       inUseWallet = {
         index: index,
-        address: encrypted.at(index).address,
+        address: thisAccount.address,
         balance: balanceString
       }
+
     } catch (e) {
       console.error(e)
     }
-  }else {
+  } else {
     inUseWallet = {
       index: 0,
       address: "",
@@ -44,7 +49,7 @@ export const store = createStore({
   },
   mutations: {
     async changeUseWallet(state, index) {
-      if(state.inUseWallet === undefined)
+      if (state.inUseWallet === undefined)
         throw "inUseWallet undefined"
 
       try {
@@ -53,7 +58,8 @@ export const store = createStore({
 
         state.inUseWallet.index = await cryptoUser.getIndexWallet()
 
-        state.inUseWallet.address = encrypted.at(state.inUseWallet.index).address
+        let encAccount: EncryptedKeystoreV3Json = <EncryptedKeystoreV3Json>encrypted.at(state.inUseWallet.index)
+        state.inUseWallet.address = encAccount.address
 
         const balance = await web3.eth.getBalance(state.inUseWallet.address)
         const balanceInEther = web3.utils.fromWei(balance, 'ether')

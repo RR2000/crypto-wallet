@@ -2,6 +2,7 @@
 import bcrypt from "bcryptjs"
 import {IdTokenClaims, UserManager, UserManagerSettings} from "oidc-client-ts"
 import Web3 from "web3"
+import {EncryptedKeystoreV3Json, WalletBase} from "web3-core";
 import axios from "axios"
 
 export const settings: UserManagerSettings = {
@@ -56,7 +57,7 @@ class CryptoUserUtils {
 
   async signoutSilent() {
     try {
-      await new UserManager(settings).revokeTokens(["refresh_token", "access_token"])
+      await new UserManager(settings).revokeTokens()
     } catch (e) {
       await new UserManager(settings).removeUser()
       //await new UserManager(settings).signoutSilent()
@@ -103,19 +104,19 @@ class CryptoUserUtils {
     }
   }
 
-  async retrieveEncryptedWallet() {
+  async retrieveEncryptedWallet(): Promise<EncryptedKeystoreV3Json[]> {
     const user = await this.getUserInfo()
     if (user) {
       console.log("Wallet encrypted: ", JSON.parse(<string>user['private_keys'])[0])
-      return JSON.parse(<string>user['private_keys'])[0]
+      return <EncryptedKeystoreV3Json[]>JSON.parse(<string>user['private_keys'])[0]
     } else {
       return []
     }
   }
 
-  async retrieveDecryptedWallet(password: string) {
+  async retrieveDecryptedWallet(password: string): Promise<WalletBase> {
     const user: IdTokenClaims | undefined = await this.getUserInfo()
-    const encryptedWallet = await this.retrieveEncryptedWallet()
+    const encryptedWallet: EncryptedKeystoreV3Json[] = await this.retrieveEncryptedWallet()
 
     let passwordMatches: boolean = false
     if (user) {
@@ -124,7 +125,7 @@ class CryptoUserUtils {
     if (!passwordMatches) {
       throw "La password non corrisponde con quella dell'account"
     }
-    const decryptedWallet = web3.eth.accounts.wallet.decrypt(encryptedWallet, password)
+    const decryptedWallet:WalletBase = web3.eth.accounts.wallet.decrypt(encryptedWallet, password)
     console.log("Wallet decrypted: ", decryptedWallet)
 
     return decryptedWallet
@@ -145,7 +146,7 @@ class CryptoUserUtils {
 
   }
 
-  async getIndexWallet() {
+  async getIndexWallet(): Promise<number> {
     const user = await this.getUserInfo()
     if (user) {
       if (JSON.parse(<string>user['private_keys'])[2].length === 0)
