@@ -48,13 +48,13 @@ public class DefaultController {
   }
 
   @GetMapping("/")
-  public String index(Model model) {
+  public String index() {
     principal = (CryptoUserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     return "index";
   }
 
   @PostMapping(value = "/addUser")
-  public String addUser(Model model, @ModelAttribute CryptoUserDatabase user) {
+  public String addUser(@ModelAttribute CryptoUserDatabase user) {
     if (user.getPassword().length() > 0 && user.getEmail().length() > 0) {
       user.setPassword(passwordEncoder.encode(user.getPassword()));
       user.addAuthority("USER");
@@ -72,19 +72,17 @@ public class DefaultController {
   }
 
   @PostMapping("/updateWallet")
-  public ResponseEntity<String> addPrivateKey(Model model,
-                                              @RequestParam String private_key,
+  public ResponseEntity<String> addPrivateKey(@RequestParam String wallet,
                                               HttpServletRequest request) {
 
     String username = extractUsername(request);
-    service.updateCryptoUserWallet(username, private_key);
+    service.updateCryptoUserWallet(username, wallet);
     return new ResponseEntity<>(HttpStatus.CREATED);
   }
 
   // it has to check the hash before changing pwd
   @PostMapping("/changePassword")
-  public ResponseEntity<String> changePassword(Model model,
-                                               @RequestParam String newPassword,
+  public ResponseEntity<String> changePassword(@RequestParam String newPassword,
                                                HttpServletRequest request) {
 
     String username = extractUsername(request);

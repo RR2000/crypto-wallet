@@ -13,7 +13,7 @@ export const settings: UserManagerSettings = {
   post_logout_redirect_uri: window.location.origin + '/',
   response_type: "code",
   loadUserInfo: true,
-  scope: "openid profile email wallets.private_keys",
+  scope: "openid profile email wallet",
   client_authentication: "client_secret_basic",
   includeIdTokenInSilentSignout: true,
   revokeTokensOnSignout: true,
@@ -51,7 +51,7 @@ function chainUrl(arg: Number) {
   }
 }
 
-export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(0)))
+export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(2)))
 
 class CryptoUserUtils {
 
@@ -107,8 +107,8 @@ class CryptoUserUtils {
   async retrieveEncryptedWallet(): Promise<EncryptedKeystoreV3Json[]> {
     const user = await this.getUserInfo()
     if (user) {
-      console.log("Wallet encrypted: ", JSON.parse(<string>user['private_keys'])[0])
-      return <EncryptedKeystoreV3Json[]>JSON.parse(<string>user['private_keys'])[0]
+      console.log("Wallet encrypted: ", JSON.parse(<string>user['wallet'])[0])
+      return <EncryptedKeystoreV3Json[]>JSON.parse(<string>user['wallet'])[0]
     } else {
       return []
     }
@@ -134,8 +134,8 @@ class CryptoUserUtils {
   async retrieveNames() {
     const user = await this.getUserInfo()
     if (user) {
-      let walletLenght = JSON.parse(<string>user["private_keys"])[0].length
-      let names = JSON.parse(<string>user["private_keys"])[1]
+      let walletLenght = JSON.parse(<string>user["wallet"])[0].length
+      let names = JSON.parse(<string>user["wallet"])[1]
       for (let i = 0; i < walletLenght; i++) {
         if (names[i] == null || names[i].match(/^ *$/) !== null)
           names[i] = ("Account " + (i + 1))
@@ -149,10 +149,10 @@ class CryptoUserUtils {
   async getIndexWallet(): Promise<number> {
     const user = await this.getUserInfo()
     if (user) {
-      if (JSON.parse(<string>user['private_keys'])[2].length === 0)
+      if (JSON.parse(<string>user['wallet'])[2].length === 0)
         return 0
       else
-        return JSON.parse(<string>user['private_keys'])[2]
+        return JSON.parse(<string>user['wallet'])[2]
     }
     return 0
   }
@@ -161,23 +161,22 @@ class CryptoUserUtils {
 
   async changeInUseWalletIndex(index: number) {
     this.index = index
-    await this.updateRemoteWallet(await this.retrieveEncryptedWallet(), await this.retrieveNames(), undefined)
+    await this.updateRemoteWallet(await this.retrieveEncryptedWallet(), await this.retrieveNames())
   }
 
-  async updateRemoteWallet(wallet: any, accountNames: any, password: any) {
-    let encryptedWallet
-    if (password !== undefined)
-      encryptedWallet = await wallet.encrypt(password)
+  async updateRemoteWallet(wallet: (WalletBase | EncryptedKeystoreV3Json[]), accountNames: any, password?: string) {
+    let encryptedWallet: EncryptedKeystoreV3Json[]
+
+    if (password)
+      encryptedWallet = (<WalletBase>wallet).encrypt(password)
     else
-      encryptedWallet = wallet
+      encryptedWallet = <EncryptedKeystoreV3Json[]>wallet
 
     const formData = new FormData()
-    formData.append('private_key', JSON.stringify([encryptedWallet, accountNames, this.index]))
+    formData.append('wallet', JSON.stringify([encryptedWallet, accountNames, this.index]))
 
     try {
       await axios.post('http://127.0.0.1:9000/updateWallet', formData)
-      console.log('remote wallet updated: ', JSON.parse(<string>formData.get('private_key')))
-
       let user = await userManager.signinSilent()
       if (user)
         axios.defaults.headers.common['Authorization'] = `${user.token_type} ${user.access_token}`

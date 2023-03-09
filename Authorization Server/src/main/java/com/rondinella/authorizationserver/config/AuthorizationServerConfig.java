@@ -126,24 +126,26 @@ public class AuthorizationServerConfig {
   }
 
   @Bean
-  public RegisteredClientRepository registeredClientRepository(CryptoUserDetailsService service, PasswordEncoder passwordEncoder) {
-
-    RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+  public RegisteredClientRepository registeredClientRepository(
+      PasswordEncoder passwordEncoder
+  ) {
+    RegisteredClient registeredClient = RegisteredClient.withId(
+            UUID.randomUUID().toString())
         .clientId("crypto-client")
         .clientSecret(passwordEncoder.encode("secret"))
-        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+        .clientAuthenticationMethod(
+            ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
         .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
         .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-        .redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
         .redirectUri("http://127.0.0.1:5173/callback")
         .scope(OidcScopes.OPENID)
         .scope(OidcScopes.PROFILE)
         .scope(OidcScopes.EMAIL)
-        .scope("wallets.private_keys")
-        .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-        .build();
-
+        .scope("wallet")
+        .clientSettings(ClientSettings.builder()
+            .requireAuthorizationConsent(true).build()
+        ).build();
     return new InMemoryRegisteredClientRepository(registeredClient);
   }
 }

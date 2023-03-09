@@ -5,7 +5,7 @@ import PasswordDialog from "@/views/my-wallet/PasswordDialog.vue"
 import {cryptoUser, web3} from "@/plugins/crypto-user-utils"
 import AccountsTable from "@/views/my-wallet/AccountsTable.vue"
 import {store} from "@/plugins/store";
-import {WalletBase} from "web3-core";
+import {EncryptedKeystoreV3Json, WalletBase} from "web3-core";
 
 //useStore().commit('setSelectedAddress', 'address')
 //let address = useStore().getters.selectedAddress
@@ -46,7 +46,7 @@ async function updateAccountNames() {
 async function refreshMyWalletTable() {
   isLoading.value = true
   try {
-    const encryptedWallet:WalletBase = await cryptoUser.retrieveEncryptedWallet()
+    const encryptedWallet:EncryptedKeystoreV3Json[] = await cryptoUser.retrieveEncryptedWallet()
     accountNames.value = await cryptoUser.retrieveNames()
 
     const walletTableData = [];

@@ -28,8 +28,8 @@ public class CryptoUserOidc extends OidcUserInfo {
       if (scopes.contains(OidcScopes.EMAIL)) {
         builder.email(db.getEmail()).emailVerified(false);
       }
-      if (scopes.contains("wallets.private_keys")) {
-        builder.claim("private_keys", db.getWallet());
+      if (scopes.contains("wallet")) {
+        builder.claim("wallet", db.getWallet());
       }
     }
 

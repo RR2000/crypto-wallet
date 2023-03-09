@@ -14,7 +14,6 @@ import java.util.Set;
 public class CryptoUserDetailsService implements UserDetailsService {
 
   private final UserRepository userRepository;
-
   public CryptoUserDetailsService(UserRepository userRepository) {
     this.userRepository = userRepository;
   }
@@ -33,7 +32,6 @@ public class CryptoUserDetailsService implements UserDetailsService {
     if (cryptoUserDatabase == null) {
       throw new UsernameNotFoundException(username);
     }
-    ;
     return new CryptoUserOidc(cryptoUserDatabase, scopes);
   }
 
