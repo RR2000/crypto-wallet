@@ -26,7 +26,12 @@ async function retriveWalletInUse() {
       }
 
     } catch (e) {
-      console.error(e)
+      inUseWallet = {
+        index: 0,
+        address: "",
+        balance: ""
+      }
+      console.error("E' stata lanciata un'eccezione, uso valori di default. e: " + e)
     }
   } else {
     inUseWallet = {

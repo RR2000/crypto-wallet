@@ -51,7 +51,7 @@ function chainUrl(arg: Number) {
   }
 }
 
-export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(2)))
+export const web3 = new Web3(new Web3.providers.HttpProvider(chainUrl(1)))
 
 class CryptoUserUtils {
 

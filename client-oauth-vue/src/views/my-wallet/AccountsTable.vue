@@ -3,7 +3,6 @@
   color: rgb(145,85,253) !important;
 }
 </style>
-
 <template>
   <VTable>
     <thead>
@@ -17,42 +16,24 @@
     </tr>
     </thead>
     <tbody>
-    <tr
-      v-for="(item, index) in walletTable"
-      :key="item.address"
-      class="text-center"
-    >
+    <tr v-for="(item, index) in walletTable" :key="item.address" class="text-center">
       <td style="width: 0;">
-        <VRadioGroup v-model="radios">
-          <VRadio
-            :value="index"
-            @click="accountClicked(item, index)"/>
+        <VRadioGroup>
+          <VRadio :value="index" :checked="index === radios" @click="accountClicked(item, index)" />
         </VRadioGroup>
       </td>
       <td class="text-center" style="width: 25%; min-width: 25%">
-        <VTextField
-          v-model="accountNames[index]"
-        />
+        <VTextField v-model="accountNames[index]" />
       </td>
-      <td class="text-center"
-          style="font-family: monospace; font-size: large"
-          :class="{ 'selected': index === selectedWallet.index }">{{
-          '0x' + item.address.toUpperCase()
-        }}
+      <td class="text-center" style="font-family: monospace; font-size: large" :class="{ 'selected': index === selectedWallet.index }">
+        {{ '0x' + item.address.toUpperCase() }}
       </td>
       <td class="text-center">{{ item.balance }}</td>
       <td class="text-center">
-        <VBtn
-          icon="mdi-eye"
-          @click="askPrivateKey(item.address)"
-        />
+        <VBtn icon="mdi-eye" @click="askPrivateKey(item.address)" />
       </td>
       <td class="text-center">
-        <VBtn
-          icon="mdi-bin"
-          color="error"
-          @click="askDeletePrivateKey(index)"
-        />
+        <VBtn icon="mdi-bin" color="error" @click="askDeletePrivateKey(index)" />
       </td>
     </tr>
     </tbody>
@@ -60,11 +41,14 @@
 </template>
 
 <script>
-import {store} from "@/plugins/store";
+import { store } from "@/plugins/store";
 
 export default {
   props: {
-    radios: "",
+    radios: {
+      type: Number, // Change type to Number since it represents an index
+      required: true,
+    },
     walletTable: {
       type: Array,
       required: true,
@@ -81,17 +65,14 @@ export default {
   },
   methods: {
     accountClicked(item, index) {
-      this.$emit('account-clicked', item, index)
-      this.selectedWallet = store.getters.inUseWallet
-    },
-    updateAccountNames() {
-      this.$emit('update-account-names', this.accountNames)
+      this.$emit('account-clicked', item, index);
+      this.selectedWallet = store.getters.inUseWallet;
     },
     askPrivateKey(address) {
-      this.$emit('ask-private-key', address)
+      this.$emit('ask-private-key', address);
     },
     askDeletePrivateKey(index) {
-      this.$emit('ask-delete-private-key', index)
+      this.$emit('ask-delete-private-key', index);
     },
   },
 }
