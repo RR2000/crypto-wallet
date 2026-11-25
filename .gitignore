@@ -86,3 +86,12 @@ nb-configuration.xml
 /Client OAuth/HELP.md
 /client-oauth-vue/package-lock.json
 /client-oauth-vue/yarn.lock
+
+##############################
+## Web app e dati locali
+##############################
+node_modules/
+web/dist/
+auth-server/data/
+*.mv.db
+*.trace.db

@@ -1,0 +1,27 @@
+server:
+  port: 9000
+  # the web app is served on / of the same domain, the server lives under /auth: same origin, no CORS
+  servlet:
+    context-path: /auth
+  # behind the reverse proxy: build redirects and the issuer from X-Forwarded-*
+  forward-headers-strategy: framework
+
+spring:
+  datasource:
+    url: ${WALLET_DB_URL:jdbc:h2:file:./data/wallet}
+    username: sa
+    password: ""
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none   # the schema belongs to Flyway (db/migration)
+
+wallet:
+  # where the web app lives: OAuth redirect and logout URIs are built from here
+  web-url: ${WALLET_WEB_URL:http://127.0.0.1:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

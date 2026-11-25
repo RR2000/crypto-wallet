@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account - Crypto Wallet</title>
+  <link rel="stylesheet" th:href="@{/auth.css}">
+</head>
+<body>
+<main class="box">
+  <h1>Create account</h1>
+  <p class="sub">Your wallets are encrypted in the browser with this password: the server never sees your keys.</p>
+
+  <p th:if="${error}" th:text="${error}" class="msg error"></p>
+
+  <form th:action="@{/addUser}" th:object="${cryptoUserDatabase}" method="post">
+    <label for="email">Email</label>
+    <input type="email" id="email" th:field="*{email}" autocomplete="email" required autofocus>
+    <label for="password">Password (at least 8 characters)</label>
+    <input type="password" id="password" th:field="*{password}" autocomplete="new-password" minlength="8" required>
+    <label for="firstName">First name</label>
+    <input type="text" id="firstName" th:field="*{firstName}" autocomplete="given-name" required>
+    <label for="lastName">Last name</label>
+    <input type="text" id="lastName" th:field="*{lastName}" autocomplete="family-name" required>
+    <button type="submit">Create account</button>
+  </form>
+
+  <p class="foot">Already registered? <a th:href="@{/login}">Sign in</a></p>
+</main>
+</body>
+</html>

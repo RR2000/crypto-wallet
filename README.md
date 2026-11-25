@@ -1,0 +1,68 @@
+# oauth2-blockchain
+
+An OAuth2 / OpenID Connect provider that also keeps your Ethereum wallets: you sign in with an email and a
+password, like on any website, and your accounts are there on every device. Private keys are encrypted in the
+browser with your password; the server only ever stores ciphertext.
+
+This is the project of my bachelor's thesis in Computer Science at the University of Turin (2022-2023),
+carried out at ALTEN: *Integration between authentication services and blockchain: how to manage cryptographic
+wallets* ([thesis](https://github.com/RR2000/RR2000/blob/main/Rondinella-Raoul-Thesis.pdf) and
+[presentation](https://github.com/RR2000/RR2000/blob/main/Rondinella-Raoul-Presentation.pdf), in Italian).
+
+**Live demo: [wallet.raoulrondinella.dev](https://wallet.raoulrondinella.dev)**, on the Sepolia test network.
+Test ETH is worth nothing: never import a key that holds real funds.
+
+## How it works
+
+```
+browser                                         wallet.raoulrondinella.dev
+┌─────────────────────────────┐   /            ┌──────────────────────────────────────┐
+│ web app (Vue 3 + Vuetify)   │ ─────────────► │ web: nginx, static files              │
+│  - OIDC login, code + PKCE  │   /auth/*      │      └─► auth: Spring Authorization   │
+│  - decrypt / encrypt keys   │ ─────────────► │          Server, users + wallets (H2) │
+│  - balances via JSON-RPC ───┼──► Sepolia     └──────────────────────────────────────┘
+└─────────────────────────────┘
+```
+
+1. The web app is a public OAuth2 client: Authorization Code with PKCE, no client secret in the browser.
+2. The `wallet` scope adds the encrypted wallet (Ethereum keystore V3 JSON) to the user's profile.
+3. To create, import or reveal a key, the app asks for the password, checks it on the server, then decrypts
+   and re-encrypts the keystore locally. Only ciphertext goes back to the server.
+4. Balances come straight from a public Sepolia node.
+
+| part | stack |
+|---|---|
+| `auth-server/` | Java 21, Spring Boot 4, Spring Security authorization server, JPA, Flyway, H2 |
+| `web/` | Vue 3, Vuetify 3, oidc-client-ts, ethers 6, Vite |
+
+## Run it locally
+
+With Docker: `docker compose up --build`, then open http://127.0.0.1:8082.
+
+Without Docker, in two terminals:
+
+```sh
+cd auth-server && ./mvnw spring-boot:run   # http://127.0.0.1:9000/auth
+cd web && npm ci && npm run dev             # http://127.0.0.1:5173 (proxies /auth to :9000)
+```
+
+Use `127.0.0.1`, not `localhost`: the authorization server rejects `localhost` redirect URIs (RFC 8252).
+
+Tests: `cd auth-server && ./mvnw verify`, `cd web && npm test`.
+
+## What changed since the thesis
+
+The thesis version (early 2023) was brought back to life in 2026 with the smallest set of changes that makes it
+safe to run in public:
+
+- Spring Boot 3.0 to 4.1, Java 17 to 21; the web app rewritten on current libraries (web3.js 1.x replaced by
+  ethers 6, the admin template's demo pages removed), `npm audit` clean.
+- The web app is a public client with PKCE instead of a confidential client with a secret shipped to the browser.
+- The bcrypt hash of the password is no longer part of the profile: the password is checked by the server
+  (`/api/password/verify`), and password changes verify the current one server-side.
+- Registering with an existing email no longer overwrites that account.
+- Database schema managed by Flyway; web app and server on the same origin, so no CORS.
+- The enterprise Proof-of-Authority network used at the time is gone: the demo runs on Sepolia.
+
+Known limits of a demo: the signing key of the tokens is generated at startup (a restart signs everyone out),
+and users live in an H2 database in a Docker volume.

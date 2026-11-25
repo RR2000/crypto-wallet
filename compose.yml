@@ -1,0 +1,19 @@
+# Tutto in locale con un comando: docker compose up --build, poi http://127.0.0.1:8082
+# (127.0.0.1 e non localhost: il server di autenticazione non accetta "localhost" nei redirect URI, RFC 8252)
+services:
+  auth:
+    build: auth-server
+    environment:
+      WALLET_WEB_URL: http://127.0.0.1:8082
+    volumes:
+      - wallet-data:/data
+
+  web:
+    build: web
+    ports:
+      - 127.0.0.1:8082:80
+    depends_on:
+      - auth
+
+volumes:
+  wallet-data:
