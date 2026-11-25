@@ -19,7 +19,7 @@ browser                                         wallet.raoulrondinella.dev
 ┌─────────────────────────────┐   /            ┌──────────────────────────────────────┐
 │ web app (Vue 3 + Vuetify)   │ ─────────────► │ web: nginx, static files              │
 │  - OIDC login, code + PKCE  │   /auth/*      │      └─► auth: Spring Authorization   │
-│  - decrypt / encrypt keys   │ ─────────────► │          Server, users + wallets (H2) │
+│  - decrypt / encrypt keys   │ ─────────────► │          Server, users + wallets (SQL)│
 │  - balances via JSON-RPC ───┼──► Sepolia     └──────────────────────────────────────┘
 └─────────────────────────────┘
 ```
@@ -35,7 +35,7 @@ browser                                         wallet.raoulrondinella.dev
 
 | part | stack |
 |---|---|
-| `auth-server/` | Java 21, Spring Boot 4, Spring Security authorization server, JPA, Flyway, H2 |
+| `auth-server/` | Java 21, Spring Boot 4, Spring Security authorization server, JPA, Flyway, PostgreSQL (H2 locally) |
 | `web/` | Vue 3, Vuetify 3, oidc-client-ts, ethers 6, Vite |
 
 ## Run it locally
@@ -54,7 +54,20 @@ with callback `<server>/auth/login/oauth2/code/github` (locally `http://127.0.0.
 
 Use `127.0.0.1`, not `localhost`: the authorization server rejects `localhost` redirect URIs (RFC 8252).
 
-Tests: `cd auth-server && ./mvnw verify`, `cd web && npm test`.
+Tests: `cd auth-server && ./mvnw verify` (it also starts a real PostgreSQL, no Docker needed), `cd web && npm test`.
+
+### Database
+
+Locally the server uses an H2 file (`./data/wallet`), the tests H2 in memory and an embedded PostgreSQL; the demo
+uses PostgreSQL:
+`WALLET_DB_URL` (e.g. `jdbc:postgresql://postgres:5432/wallet`), `WALLET_DB_USER`, `WALLET_DB_PASSWORD`.
+Flyway owns the schema: portable migrations in `db/migration/common`, the few that need a dialect in
+`db/migration/h2` and `db/migration/postgresql`.
+
+Moving from H2: start once with `WALLET_IMPORT_FROM=jdbc:h2:file:/data/wallet;IFEXISTS=TRUE`. Right after the
+migrations, before serving requests, the server copies users and authorities from that file in one transaction,
+only if the destination is empty, and logs the counts (`wallet import: ...`), never the rows. Later restarts with
+the variable still set do nothing.
 
 ## What changed since the thesis
 
@@ -71,4 +84,4 @@ safe to run in public:
 - The enterprise Proof-of-Authority network used at the time is gone: the demo runs on Sepolia.
 
 Known limits of a demo: the signing key of the tokens is generated at startup (a restart signs everyone out),
-and users live in an H2 database in a Docker volume.
+and the demo is a single instance with a single database.
