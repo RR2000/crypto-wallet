@@ -19,6 +19,10 @@ spring:
 wallet:
   # where the web app lives: OAuth redirect and logout URIs are built from here
   web-url: ${WALLET_WEB_URL:http://127.0.0.1:5173}
+  # optional "Sign in with GitHub": a GitHub OAuth App with callback <server>/auth/login/oauth2/code/github
+  github:
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
 
 management:
   endpoints:

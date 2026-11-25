@@ -4,7 +4,9 @@ import { login, session } from '../auth'
 import { editAccounts, renameAndSelect, unlock } from '../actions'
 import PasswordDialog from '../components/PasswordDialog.vue'
 import { EXPLORER_URL, FAUCET_URL, NETWORK_NAME } from '../config'
-import { addressOf, balanceOf, fromMnemonic, fromPrivateKey, newAccount } from '../wallet'
+import { addressOf, balanceOf, fromMnemonic, fromPrivateKey, newAccount, slotAddress } from '../wallet'
+
+const LOCKED_TEXT = 'Questo account è cifrato con una password di prima: si riapre da Account, con la vecchia password.'
 
 type Pending =
   | { kind: 'create' }
@@ -75,20 +77,22 @@ async function onPassword(password: string): Promise<void> {
   if (!p) return
   if (p.kind === 'show') {
     await run('', async () => {
-      shownKey.value = (await unlock(password))[p.index].privateKey
+      const account = (await unlock(password))[p.index].account
+      if (!account) throw new Error(LOCKED_TEXT)
+      shownKey.value = account.privateKey
     })
     return
   }
   if (p.kind === 'create') {
-    await run('Account creato.', () => editAccounts(password, (list, n) => { list.push(newAccount()); n.push(`Account ${list.length}`) }))
+    await run('Account creato.', () => editAccounts(password, (list, n) => { list.push({ account: newAccount() }); n.push(`Account ${list.length}`) }))
   } else if (p.kind === 'delete') {
     await run('Account eliminato.', () => editAccounts(password, (list, n) => { list.splice(p.index, 1); n.splice(p.index, 1) }))
   } else {
     const account = p.kind === 'privateKey' ? () => fromPrivateKey(privateKeyInput.value) : () => fromMnemonic(mnemonicInput.value, mnemonicIndex.value)
     await run('Account importato.', () => editAccounts(password, (list, n) => {
       const a = account()
-      if (list.some((x) => x.address === a.address)) throw new Error('Questo account è già nel wallet.')
-      list.push(a)
+      if (list.some((s) => slotAddress(s) === a.address)) throw new Error('Questo account è già nel wallet.')
+      list.push({ account: a })
       n.push(`Account ${list.length}`)
     }))
     privateKeyInput.value = ''
@@ -121,6 +125,11 @@ function select(index: number): Promise<void> {
       <VBtn :href="FAUCET_URL" rel="noopener" variant="text" prepend-icon="mdi-water-outline">ETH di prova</VBtn>
     </div>
 
+    <VAlert v-if="!session.profile.hasPassword" type="info" variant="tonal" class="mb-4">
+      Sei entrato con GitHub: prima di creare o importare account scegli una password. Cifra le chiavi nel browser,
+      il server non le vede mai.
+      <div class="mt-3"><VBtn to="/account" color="primary" variant="flat">Scegli la password</VBtn></div>
+    </VAlert>
     <VAlert v-if="error" type="error" :text="error" closable class="mb-4" @click:close="error = ''" />
     <VAlert v-if="done" type="success" :text="done" closable class="mb-4" @click:close="done = ''" />
 
@@ -147,6 +156,9 @@ function select(index: number): Promise<void> {
               <a :href="EXPLORER_URL + a.address" rel="noopener" class="text-medium-emphasis">{{ a.address }}</a>
             </div>
             <div class="text-subtitle-1 font-weight-medium">{{ balances[a.address] ?? '…' }} ETH</div>
+            <VChip v-if="session.locked.includes(a.address)" size="small" prepend-icon="mdi-lock-outline" class="mt-1" to="/account">
+              Bloccato: cifrato con una password di prima
+            </VChip>
             <template #append>
               <div class="d-flex flex-column flex-sm-row">
                 <VBtn icon="mdi-eye-outline" variant="text" aria-label="Mostra chiave privata" :disabled="busy" @click="ask({ kind: 'show', index: a.index })" />

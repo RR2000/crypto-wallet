@@ -25,6 +25,7 @@
     <button type="submit">Create account</button>
   </form>
 
+  <p th:if="${gitHub}" class="foot">Or skip the form: <a th:href="@{/oauth2/authorization/github}">sign in with GitHub</a></p>
   <p class="foot">Already registered? <a th:href="@{/login}">Sign in</a></p>
 </main>
 </body>

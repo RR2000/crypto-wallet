@@ -20,12 +20,18 @@ export interface Profile {
   email: string
   firstName: string
   lastName: string
+  /** false per un account arrivato da GitHub che non ha ancora scelto la password (che cifra il wallet) */
+  hasPassword: boolean
+  /** come si e' entrati: "github" permette di scegliere una password nuova senza la vecchia */
+  login: string
 }
 
 export const session = reactive({
   ready: false,
   profile: null as Profile | null,
   wallet: parseWallet(null) as StoredWallet,
+  /** indirizzi che l'ultima password usata non apre: cifrati con una password vecchia */
+  locked: [] as string[],
 })
 
 let user: User | null = null
@@ -35,6 +41,9 @@ function apply(claims: Record<string, unknown>): void {
     email: String(claims.email ?? claims.sub ?? ''),
     firstName: String(claims.given_name ?? ''),
     lastName: String(claims.family_name ?? ''),
+    hasPassword: claims.has_password !== false,
+    // e' un claim del token: userinfo non lo ripete
+    login: String(user?.profile.login ?? claims.login ?? ''),
   }
   session.wallet = parseWallet(claims.wallet)
 }
@@ -105,5 +114,15 @@ export async function saveWallet(w: StoredWallet): Promise<void> {
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
   const r = await call('/api/password', form({ currentPassword, newPassword }))
+  return r.status === 204
+}
+
+export async function setPassword(newPassword: string): Promise<boolean> {
+  const r = await call('/api/password/set', form({ newPassword }))
+  return r.status === 204
+}
+
+export async function resetPassword(newPassword: string): Promise<boolean> {
+  const r = await call('/api/password/reset', form({ newPassword }))
   return r.status === 204
 }

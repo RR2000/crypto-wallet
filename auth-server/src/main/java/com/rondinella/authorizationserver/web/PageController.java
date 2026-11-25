@@ -1,5 +1,6 @@
 package com.rondinella.authorizationserver.web;
 
+import com.rondinella.authorizationserver.config.AuthorizationServerConfig;
 import com.rondinella.authorizationserver.usermanaging.CryptoUserDatabase;
 import com.rondinella.authorizationserver.usermanaging.CryptoUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,22 +16,29 @@ public class PageController {
 
   private final CryptoUserDetailsService users;
   private final String webUrl;
+  private final boolean gitHub;
 
-  PageController(CryptoUserDetailsService users, @Value("${wallet.web-url}") String webUrl) {
+  PageController(CryptoUserDetailsService users, @Value("${wallet.web-url}") String webUrl,
+                 AuthorizationServerConfig.GitHubLogin gitHub) {
     this.users = users;
     this.webUrl = webUrl;
+    this.gitHub = gitHub.enabled();
+  }
+
+  @ModelAttribute
+  void common(Model model) {
+    model.addAttribute("webUrl", webUrl);
+    model.addAttribute("gitHub", gitHub);
   }
 
   @GetMapping("/login")
-  public String login(Model model) {
-    model.addAttribute("webUrl", webUrl);
+  public String login() {
     return "login";
   }
 
   @GetMapping("/newUser")
   public String newUser(Model model) {
     model.addAttribute("cryptoUserDatabase", new CryptoUserDatabase());
-    model.addAttribute("webUrl", webUrl);
     return "newUser";
   }
 
@@ -40,7 +48,6 @@ public class PageController {
     if (error != null) {
       user.setPassword("");
       model.addAttribute("error", error);
-      model.addAttribute("webUrl", webUrl);
       return "newUser";
     }
     return "redirect:/login?registered";
