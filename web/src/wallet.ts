@@ -66,6 +66,39 @@ export async function decryptAll(w: StoredWallet, password: string): Promise<Acc
   )
 }
 
+/**
+ * Un posto del wallet: keystore cifrato, account in chiaro, o entrambi.
+ * Solo keystore = account bloccato: cifrato con un'altra password (una vecchia), resta li' finche' non torna in mente.
+ * Solo account = da cifrare al salvataggio.
+ */
+export interface Slot {
+  keystore?: Keystore
+  account?: Account
+}
+
+export function slotAddress(s: Slot): string {
+  return s.account?.address ?? addressOf(s.keystore!)
+}
+
+/** Apre i keystore che si aprono con questa password; gli altri restano bloccati, mai buttati. */
+export async function openAll(w: StoredWallet, password: string): Promise<Slot[]> {
+  return Promise.all(
+    w.keystores.map(async (keystore) => {
+      try {
+        const a = await decryptKeystoreJson(JSON.stringify(keystore), password)
+        return { keystore, account: { address: a.address, privateKey: a.privateKey } }
+      } catch {
+        return { keystore }
+      }
+    }),
+  )
+}
+
+/** Cifra solo i posti senza keystore; gli altri (anche quelli bloccati) restano com'erano. */
+export async function sealAll(slots: Slot[], password: string): Promise<Keystore[]> {
+  return Promise.all(slots.map(async (s) => s.keystore ?? (await encryptAll([s.account!], password))[0]))
+}
+
 export async function encryptAll(accounts: Account[], password: string): Promise<Keystore[]> {
   return Promise.all(
     accounts.map(async (a) => JSON.parse(await encryptKeystoreJson({ address: a.address, privateKey: a.privateKey }, password, { scrypt: SCRYPT })) as Keystore),

@@ -1,8 +1,8 @@
 # oauth2-blockchain
 
 An OAuth2 / OpenID Connect provider that also keeps your Ethereum wallets: you sign in with an email and a
-password, like on any website, and your accounts are there on every device. Private keys are encrypted in the
-browser with your password; the server only ever stores ciphertext.
+password (or with GitHub), like on any website, and your accounts are there on every device. Private keys are
+encrypted in the browser with your password; the server only ever stores ciphertext.
 
 This is the project of my bachelor's thesis in Computer Science at the University of Turin (2022-2023),
 carried out at ALTEN: *Integration between authentication services and blockchain: how to manage cryptographic
@@ -29,6 +29,9 @@ browser                                         wallet.raoulrondinella.dev
 3. To create, import or reveal a key, the app asks for the password, checks it on the server, then decrypts
    and re-encrypts the keystore locally. Only ciphertext goes back to the server.
 4. Balances come straight from a public Sepolia node.
+5. Optional sign in with GitHub: a GitHub account lands in the local account with the same *verified* email (or a
+   new one, which then chooses a password). A forgotten password can be replaced after a GitHub login; nothing is
+   deleted: accounts encrypted with the old password stay in the wallet, locked, and open again with it.
 
 | part | stack |
 |---|---|
@@ -45,6 +48,9 @@ Without Docker, in two terminals:
 cd auth-server && ./mvnw spring-boot:run   # http://127.0.0.1:9000/auth
 cd web && npm ci && npm run dev             # http://127.0.0.1:5173 (proxies /auth to :9000)
 ```
+
+Sign in with GitHub is on when `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are set, from a GitHub OAuth App
+with callback `<server>/auth/login/oauth2/code/github` (locally `http://127.0.0.1:5173/auth/login/oauth2/code/github`).
 
 Use `127.0.0.1`, not `localhost`: the authorization server rejects `localhost` redirect URIs (RFC 8252).
 
