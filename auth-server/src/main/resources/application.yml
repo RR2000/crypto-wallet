@@ -7,10 +7,14 @@ server:
   forward-headers-strategy: framework
 
 spring:
+  # H2 on file for local development and tests; in production PostgreSQL (WALLET_DB_URL/USER/PASSWORD)
   datasource:
     url: ${WALLET_DB_URL:jdbc:h2:file:./data/wallet}
-    username: sa
-    password: ""
+    username: ${WALLET_DB_USER:sa}
+    password: ${WALLET_DB_PASSWORD:}
+  flyway:
+    # portable migrations in common, the few that need a dialect in h2 / postgresql
+    locations: classpath:db/migration/common,classpath:db/migration/{vendor}
   jpa:
     open-in-view: false
     hibernate:
@@ -23,6 +27,12 @@ wallet:
   github:
     client-id: ${GITHUB_CLIENT_ID:}
     client-secret: ${GITHUB_CLIENT_SECRET:}
+  # one-off copy of users and authorities from the old H2 database (e.g. jdbc:h2:file:/data/wallet), right after
+  # the migrations and only if the destination is empty: see LegacyDatabaseImport
+  import:
+    from: ${WALLET_IMPORT_FROM:}
+    username: sa
+    password: ""
 
 management:
   endpoints:
