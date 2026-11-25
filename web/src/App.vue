@@ -53,6 +53,10 @@ function toggleTheme(): void {
 .page {
   max-width: 64rem;
 }
+/* le card raggiunte con un #ancora non finiscono sotto la barra in alto */
+.scroll-target {
+  scroll-margin-top: 5rem;
+}
 .mono {
   font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace;
   overflow-wrap: anywhere;

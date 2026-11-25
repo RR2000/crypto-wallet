@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { login, session } from '../auth'
 import { editAccounts, renameAndSelect, unlock } from '../actions'
 import PasswordDialog from '../components/PasswordDialog.vue'
+import { FORGOT_PASSWORD_LINK, offersReset } from '../passwordHelp'
 import { EXPLORER_URL, FAUCET_URL, NETWORK_NAME } from '../config'
 import { addressOf, balanceOf, fromMnemonic, fromPrivateKey, newAccount, slotAddress } from '../wallet'
 
@@ -17,6 +18,8 @@ type Pending =
 
 const busy = ref(false)
 const error = ref('')
+// password rifiutata a chi e' entrato con GitHub: sotto l'errore il pulsante per sceglierne una nuova
+const forgotOffer = ref(false)
 const done = ref('')
 const pending = ref<Pending | null>(null)
 const dialog = ref(false)
@@ -52,6 +55,7 @@ const dialogTitle = computed(() => {
 
 function ask(p: Pending): void {
   error.value = ''
+  forgotOffer.value = false
   done.value = ''
   pending.value = p
   dialog.value = true
@@ -60,12 +64,14 @@ function ask(p: Pending): void {
 async function run(label: string, job: () => Promise<void>): Promise<void> {
   busy.value = true
   error.value = ''
+  forgotOffer.value = false
   done.value = ''
   try {
     await job()
     done.value = label
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
+    forgotOffer.value = offersReset(e)
   } finally {
     busy.value = false
   }
@@ -130,7 +136,12 @@ function select(index: number): Promise<void> {
       il server non le vede mai.
       <div class="mt-3"><VBtn to="/account" color="primary" variant="flat">Scegli la password</VBtn></div>
     </VAlert>
-    <VAlert v-if="error" type="error" :text="error" closable class="mb-4" @click:close="error = ''" />
+    <VAlert v-if="error" type="error" closable class="mb-4" @click:close="error = ''">
+      {{ error }}
+      <div v-if="forgotOffer" class="mt-3">
+        <VBtn :to="FORGOT_PASSWORD_LINK" variant="outlined" prepend-icon="mdi-lock-question">Password dimenticata</VBtn>
+      </div>
+    </VAlert>
     <VAlert v-if="done" type="success" :text="done" closable class="mb-4" @click:close="done = ''" />
 
     <VCard class="mb-6">

@@ -2,11 +2,13 @@
 import { computed, reactive, ref } from 'vue'
 import { login, logout, session } from '../auth'
 import { changeAccountPassword, chooseFirstPassword, recoverLocked, resetForgottenPassword } from '../actions'
+import { FORGOT_PASSWORD_LINK, offersReset } from '../passwordHelp'
 
 const MIN = 8
 const visible = ref(false)
 const busy = ref(false)
 const error = ref('')
+const forgotOffer = ref(false)
 const done = ref('')
 // un modulo per card: i campi non si mescolano
 type Fields = { current: string; next: string; confirm: string; old: string }
@@ -21,6 +23,7 @@ const type = computed(() => (visible.value ? 'text' : 'password'))
 
 async function run(f: Fields, job: () => Promise<string>, checkNew = true): Promise<void> {
   error.value = ''
+  forgotOffer.value = false
   done.value = ''
   if (checkNew && f.next.length < MIN) return void (error.value = `La nuova password deve avere almeno ${MIN} caratteri.`)
   if (checkNew && f.next !== f.confirm) return void (error.value = 'Le due password nuove non coincidono.')
@@ -30,6 +33,7 @@ async function run(f: Fields, job: () => Promise<string>, checkNew = true): Prom
     Object.assign(f, empty())
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
+    forgotOffer.value = offersReset(e)
   } finally {
     busy.value = false
   }
@@ -70,7 +74,12 @@ const recover = () => run(old, async () => {
     </VCol>
 
     <VCol cols="12" md="7" class="d-flex flex-column ga-6">
-      <VAlert v-if="error" type="error" :text="error" closable @click:close="error = ''" />
+      <VAlert v-if="error" type="error" closable @click:close="error = ''">
+        {{ error }}
+        <div v-if="forgotOffer" class="mt-3">
+          <VBtn :to="FORGOT_PASSWORD_LINK" variant="outlined" prepend-icon="mdi-lock-question">Password dimenticata</VBtn>
+        </div>
+      </VAlert>
       <VAlert v-if="done" type="success" :text="done" closable @click:close="done = ''" />
 
       <!-- account arrivato da GitHub, ancora senza password -->
@@ -105,7 +114,7 @@ const recover = () => run(old, async () => {
           </VCardActions>
         </VCard>
 
-        <VCard title="Password dimenticata" prepend-icon="mdi-lock-question">
+        <VCard id="password-dimenticata" title="Password dimenticata" prepend-icon="mdi-lock-question" class="scroll-target">
           <VCardText v-if="fromGitHub">
             <p class="text-body-2 text-medium-emphasis mb-4">
               Sei entrato con GitHub, quindi puoi scegliere una password nuova senza la vecchia. Non si cancella niente:

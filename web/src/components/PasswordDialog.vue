@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // Chiede la password dell'account prima di un'operazione che tocca le chiavi.
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { session } from '../auth'
+import { canResetWithoutOld, FORGOT_PASSWORD_LINK } from '../passwordHelp'
 
 const open = defineModel<boolean>({ default: false })
 defineProps<{ title: string; text?: string; danger?: boolean }>()
@@ -8,6 +10,8 @@ const emit = defineEmits<{ confirm: [password: string] }>()
 
 const password = ref('')
 const visible = ref(false)
+// entrato con GitHub: se non ricorda la password puo' sceglierne una nuova senza la vecchia
+const forgotLink = computed(() => canResetWithoutOld(session.profile))
 
 watch(open, (v) => {
   if (!v) {
@@ -39,6 +43,10 @@ function confirm(): void {
           @click:append-inner="visible = !visible"
           @keydown.enter="confirm"
         />
+        <div v-if="forgotLink" class="text-body-2">
+          <RouterLink :to="FORGOT_PASSWORD_LINK" @click="open = false">Password dimenticata?</RouterLink>
+          <span class="text-medium-emphasis"> Sei entrato con GitHub: puoi sceglierne una nuova senza perdere gli account.</span>
+        </div>
       </VCardText>
       <VCardActions>
         <VSpacer />
