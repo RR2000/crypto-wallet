@@ -13,4 +13,6 @@ export const router = createRouter({
     { path: '/callback', component: CallbackPage },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
+  // i link con #ancora (es. "Password dimenticata" nella pagina Account) portano alla card giusta
+  scrollBehavior: (to, _from, saved) => saved ?? (to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 }),
 })

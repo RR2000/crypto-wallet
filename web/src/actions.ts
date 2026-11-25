@@ -4,11 +4,12 @@
 // Un account cifrato con un'altra password (dopo un "password dimenticata") resta bloccato ma non si perde mai.
 import { changePassword, refresh, resetPassword, saveWallet, session, setPassword, verifyPassword } from './auth'
 import { openAll, sealAll, slotAddress, type Slot } from './wallet'
+import { canResetWithoutOld, WrongPasswordError } from './passwordHelp'
 import { decryptKeystoreJson } from 'ethers'
 
 export async function unlock(password: string): Promise<Slot[]> {
   if (!session.profile?.hasPassword) throw new Error('Prima scegli una password nella pagina Account: protegge le chiavi del wallet.')
-  if (!(await verifyPassword(password))) throw new Error('La password non corrisponde a quella dell\'account.')
+  if (!(await verifyPassword(password))) throw new WrongPasswordError(canResetWithoutOld(session.profile))
   const slots = await openAll(session.wallet, password)
   session.locked = slots.filter((s) => !s.account).map(slotAddress)
   return slots
