@@ -19,7 +19,7 @@ public class CryptoUserOidc extends OidcUserInfo {
     if (!scopes.isEmpty()) {
       if (scopes.contains(OidcScopes.PROFILE)) {
         builder
-            .name(db.getFirstName() + " " + db.getLastName())
+            .name((Objects.toString(db.getFirstName(), "") + " " + Objects.toString(db.getLastName(), "")).trim())
             .givenName(db.getFirstName())
             .familyName(db.getLastName())
             .updatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE));
@@ -29,6 +29,8 @@ public class CryptoUserOidc extends OidcUserInfo {
       }
       if (scopes.contains("wallet")) {
         builder.claim("wallet", db.getWallet());
+        // the web app asks to choose a password (which encrypts the wallet) when there is none yet
+        builder.claim("has_password", db.getPassword() != null);
       }
     }
 

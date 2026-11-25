@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addressOf, decryptAll, encryptAll, fromMnemonic, fromPrivateKey, newAccount, parseWallet, serializeWallet } from './wallet'
+import { addressOf, decryptAll, encryptAll, fromMnemonic, fromPrivateKey, newAccount, openAll, parseWallet, sealAll, serializeWallet, slotAddress } from './wallet'
 
 // frase di prova pubblica (Hardhat/Foundry): il primo account e' noto
 const TEST_PHRASE = 'test test test test test test test test test test test junk'
@@ -29,5 +29,22 @@ describe('wallet', () => {
     expect(JSON.stringify(stored)).not.toContain(a.privateKey.slice(2))
     expect(await decryptAll(stored, 'password-giusta')).toEqual([a, b])
     await expect(decryptAll(stored, 'password-sbagliata')).rejects.toThrow()
+  }, 30_000)
+
+  it('con password diverse apre quel che puo\' e non butta mai i bloccati', async () => {
+    const vecchio = newAccount()
+    const [ksVecchio] = await encryptAll([vecchio], 'password-vecchia')
+    const nuovo = newAccount()
+    // dopo una password dimenticata: un account di prima e uno nuovo con la password nuova
+    const keystores = await sealAll([{ keystore: ksVecchio }, { account: nuovo }], 'password-nuova')
+    expect(keystores[0]).toBe(ksVecchio)
+
+    const slots = await openAll({ keystores, names: ['a', 'b'], inUse: 0 }, 'password-nuova')
+    expect(slots[0].account).toBeUndefined()
+    expect(slotAddress(slots[0])).toBe(vecchio.address)
+    expect(slots[1].account).toEqual(nuovo)
+
+    const conVecchia = await openAll({ keystores, names: ['a', 'b'], inUse: 0 }, 'password-vecchia')
+    expect(conVecchia[0].account).toEqual(vecchio)
   }, 30_000)
 })

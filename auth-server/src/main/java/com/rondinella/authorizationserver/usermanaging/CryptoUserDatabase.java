@@ -15,7 +15,8 @@ public class CryptoUserDatabase {
   @Column(nullable = false)
   private String email;
 
-  @Column(nullable = false)
+  /** bcrypt hash; null for an account created from GitHub that has not chosen a password yet */
+  @Column
   private String password;
 
   @Column

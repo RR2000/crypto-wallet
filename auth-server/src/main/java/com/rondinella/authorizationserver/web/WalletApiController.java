@@ -1,5 +1,6 @@
 package com.rondinella.authorizationserver.web;
 
+import com.rondinella.authorizationserver.config.AuthorizationServerConfig;
 import com.rondinella.authorizationserver.usermanaging.CryptoUserDetailsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,11 +47,38 @@ public class WalletApiController {
   public ResponseEntity<Void> changePassword(@AuthenticationPrincipal Jwt jwt,
                                              @RequestParam String currentPassword,
                                              @RequestParam String newPassword) {
-    if (newPassword.isBlank()) {
+    if (!CryptoUserDetailsService.validPassword(newPassword)) {
       return ResponseEntity.badRequest().build();
     }
     return users.changePassword(jwt.getSubject(), currentPassword, newPassword)
         ? ResponseEntity.noContent().build()
         : ResponseEntity.status(403).build();
+  }
+
+  /** First password of an account that came from GitHub: 409 if it already has one. */
+  @PostMapping("/password/set")
+  public ResponseEntity<Void> setPassword(@AuthenticationPrincipal Jwt jwt, @RequestParam String newPassword) {
+    if (!CryptoUserDetailsService.validPassword(newPassword)) {
+      return ResponseEntity.badRequest().build();
+    }
+    return users.setFirstPassword(jwt.getSubject(), newPassword)
+        ? ResponseEntity.noContent().build()
+        : ResponseEntity.status(409).build();
+  }
+
+  /**
+   * Forgotten password: a new one without the old one, only with a token obtained by signing in with GitHub.
+   * The wallet stays as it is; the keys encrypted with the old password are recovered in the browser if it turns up.
+   */
+  @PostMapping("/password/reset")
+  public ResponseEntity<Void> resetPassword(@AuthenticationPrincipal Jwt jwt, @RequestParam String newPassword) {
+    if (!AuthorizationServerConfig.LOGIN_GITHUB.equals(jwt.getClaimAsString(AuthorizationServerConfig.LOGIN_CLAIM))) {
+      return ResponseEntity.status(403).build();
+    }
+    if (!CryptoUserDetailsService.validPassword(newPassword)) {
+      return ResponseEntity.badRequest().build();
+    }
+    users.resetPassword(jwt.getSubject(), newPassword);
+    return ResponseEntity.noContent().build();
   }
 }

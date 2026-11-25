@@ -51,7 +51,11 @@ input {
   font: inherit;
 }
 input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-button {
+button, .button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   width: 100%;
   min-height: 2.75rem;
   margin-top: 1.4rem;
@@ -66,5 +70,11 @@ button {
 .msg { padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.9rem; border: 1px solid; }
 .msg.error { color: #b3261e; border-color: #e6b8b5; background: #fdecea; }
 .msg.ok { color: #1e6b33; border-color: #b6dfc2; background: #e9f6ed; }
+.button { margin-top: 0; text-decoration: none; }
+.button.github { background: #24292f; color: #fff; }
+@media (prefers-color-scheme: dark) { .button.github { background: #f6f8fa; color: #24292f; } }
+.or { display: flex; align-items: center; gap: 0.75rem; margin: 1.25rem 0; color: var(--muted); font-size: 0.85rem; }
+.or::before, .or::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+.hint { margin: 0.75rem 0 0; color: var(--muted); font-size: 0.85rem; }
 .foot { margin: 1rem 0 0; font-size: 0.9rem; color: var(--muted); text-align: center; }
 a { color: var(--accent); }
