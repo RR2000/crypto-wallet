@@ -32,6 +32,8 @@ browser                                         wallet.raoulrondinella.dev
 5. Optional sign in with GitHub: a GitHub account lands in the local account with the same *verified* email (or a
    new one, which then chooses a password). A forgotten password can be replaced after a GitHub login; nothing is
    deleted: accounts encrypted with the old password stay in the wallet, locked, and open again with it.
+6. Optional "forgot password" by email: a single-use link, valid 30 minutes, to choose a new password. Same rule as
+   with GitHub: the wallet is not touched, the keys encrypted with the old password stay locked until it turns up.
 
 | part | stack |
 |---|---|
@@ -51,6 +53,14 @@ cd web && npm ci && npm run dev             # http://127.0.0.1:5173 (proxies /au
 
 Sign in with GitHub is on when `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are set, from a GitHub OAuth App
 with callback `<server>/auth/login/oauth2/code/github` (locally `http://127.0.0.1:5173/auth/login/oauth2/code/github`).
+
+"Forgot password" by email is on when `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD` and `MAIL_FROM` are set
+(`SMTP_PORT` defaults to 587, STARTTLS is required); the links point to `WALLET_WEB_URL`, never to the Host of the
+request. Otherwise the login page does not offer it and `/auth/forgotPassword` answers 404.
+The request always gets the same answer, whether an account has the email or not, and the mail leaves in the
+background; the link holds 32 random bytes and the database keeps only their SHA-256; a new password voids the
+other links. At most 10 requests per hour per client address, 3 mails per hour per email and 50 per hour in all.
+The token travels in the URL fragment (`/auth/resetPassword#token=...`), so it never reaches an access log.
 
 Use `127.0.0.1`, not `localhost`: the authorization server rejects `localhost` redirect URIs (RFC 8252).
 

@@ -113,6 +113,15 @@ class AuthorizationServerApplicationTests {
   }
 
   @Test
+  void withoutSmtpThereIsNoPasswordResetByEmail() throws Exception {
+    mvc.perform(get("/login")).andExpect(model().attribute("passwordReset", false));
+    mvc.perform(get("/features")).andExpect(jsonPath("$.passwordReset").value(false));
+    mvc.perform(get("/forgotPassword")).andExpect(status().isNotFound());
+    mvc.perform(post("/forgotPassword").with(csrf()).param("email", "someone@example.com")).andExpect(status().isNotFound());
+    mvc.perform(get("/resetPassword")).andExpect(status().isNotFound());
+  }
+
+  @Test
   void theLoginPageOffersGitHubAndItRedirectsThere() throws Exception {
     mvc.perform(get("/login")).andExpect(status().isOk()).andExpect(model().attribute("gitHub", true));
     String location = mvc.perform(get("/oauth2/authorization/github"))

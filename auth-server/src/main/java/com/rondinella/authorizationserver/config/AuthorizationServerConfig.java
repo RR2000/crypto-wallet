@@ -90,6 +90,7 @@ public class AuthorizationServerConfig {
     http
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers("/login", "/newUser", "/addUser", "/auth.css", "/error", "/actuator/health/**").permitAll()
+            .requestMatchers("/features", "/forgotPassword", "/resetPassword", "/reset.js").permitAll()
             .anyRequest().authenticated())
         .formLogin(form -> form.loginPage("/login").permitAll())
         .logout(Customizer.withDefaults());

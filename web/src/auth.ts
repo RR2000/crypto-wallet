@@ -122,6 +122,17 @@ export async function setPassword(newPassword: string): Promise<boolean> {
   return r.status === 204
 }
 
+/** Cosa offre il server: "Accedi con GitHub" e la password dimenticata via email (link nella pagina di accesso). */
+export async function features(): Promise<{ github: boolean; passwordReset: boolean }> {
+  try {
+    const r = await fetch(`${AUTH_URL}/features`)
+    if (r.ok) return await r.json()
+  } catch {
+    // server non raggiungibile: non si propone niente
+  }
+  return { github: false, passwordReset: false }
+}
+
 export async function resetPassword(newPassword: string): Promise<boolean> {
   const r = await call('/api/password/reset', form({ newPassword }))
   return r.status === 204

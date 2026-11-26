@@ -14,6 +14,8 @@
   <p th:if="${param.error}" class="msg error">Wrong email or password.</p>
   <p th:if="${param.logout}" class="msg ok">You have been signed out.</p>
   <p th:if="${param.registered}" class="msg ok">Account created: you can sign in now.</p>
+  <p th:if="${param.reset}" class="msg ok">Password changed: sign in with the new one. Accounts encrypted with the old
+    password stay in the wallet, locked: open them again in Account with the old password.</p>
   <p th:if="${param.github}" class="msg error">Sign in with GitHub failed. The GitHub account needs a verified email.</p>
 
   <form th:action="@{/login}" method="post">
@@ -23,6 +25,7 @@
     <input type="password" id="password" name="password" autocomplete="current-password" required>
     <button type="submit">Sign in</button>
   </form>
+  <p th:if="${passwordReset}" class="foot"><a th:href="@{/forgotPassword}">Forgot your password?</a></p>
 
   <th:block th:if="${gitHub}">
     <p class="or"><span>or</span></p>
