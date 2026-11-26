@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import { login, logout, session } from '../auth'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { features, login, logout, session } from '../auth'
 import { changeAccountPassword, chooseFirstPassword, recoverLocked, resetForgottenPassword } from '../actions'
 import { FORGOT_PASSWORD_LINK, offersReset } from '../passwordHelp'
 
@@ -19,6 +19,9 @@ const forgot = reactive(empty())
 const old = reactive(empty())
 
 const fromGitHub = computed(() => session.profile?.login === 'github')
+// password dimenticata via email: solo se il server puo' mandare posta
+const byEmail = ref(false)
+onMounted(async () => { byEmail.value = (await features()).passwordReset })
 const type = computed(() => (visible.value ? 'text' : 'password'))
 
 async function run(f: Fields, job: () => Promise<string>, checkNew = true): Promise<void> {
@@ -125,7 +128,12 @@ const recover = () => run(old, async () => {
             <VTextField v-model="forgot.confirm" :type="type" label="Ripeti la nuova password" autocomplete="new-password" />
           </VCardText>
           <VCardText v-else class="text-body-2">
-            Esci e rientra con <strong>Accedi con GitHub</strong>, con un account GitHub che ha la stessa email
+            <p v-if="byEmail" class="mb-2">
+              Esci e, nella pagina di accesso, scegli <strong>Forgot your password?</strong>: ti arriva per email un
+              link per scegliere una password nuova. Non si cancella niente: gli account cifrati con la vecchia password
+              restano nel wallet, bloccati, e si riaprono qui sotto se ti torna in mente.
+            </p>
+            {{ byEmail ? 'Oppure esci' : 'Esci' }} e rientra con <strong>Accedi con GitHub</strong>, con un account GitHub che ha la stessa email
             (verificata): da qui potrai scegliere una password nuova, senza perdere gli account.
           </VCardText>
           <VCardActions>

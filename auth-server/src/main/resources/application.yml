@@ -27,6 +27,22 @@ wallet:
   github:
     client-id: ${GITHUB_CLIENT_ID:}
     client-secret: ${GITHUB_CLIENT_SECRET:}
+  # optional "forgot password" by email through an SMTP relay with STARTTLS (PasswordResetService); any of host,
+  # username, password or sender empty = off. The links point to web-url, never to the request's Host.
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    from: ${MAIL_FROM:}
+    from-name: Crypto Wallet
+    # requests that send a mail, per hour: per client address (then 429), per email and for the whole site
+    # (then nothing is sent, same answer)
+    limit:
+      per-ip: 10
+      per-email: 3
+      total: 50
+      window-minutes: 60
   # one-off copy of users and authorities from the old H2 database (e.g. jdbc:h2:file:/data/wallet), right after
   # the migrations and only if the destination is empty: see LegacyDatabaseImport
   import:
@@ -35,6 +51,10 @@ wallet:
     password: ""
 
 management:
+  # no mail health check: a slow relay must not make the server look down
+  health:
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:
