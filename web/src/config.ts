@@ -9,5 +9,5 @@ export const NETWORK_NAME: string = import.meta.env.VITE_NETWORK_NAME ?? 'Sepoli
 export const EXPLORER_URL: string = import.meta.env.VITE_EXPLORER_URL ?? 'https://sepolia.etherscan.io/address/'
 export const FAUCET_URL: string = import.meta.env.VITE_FAUCET_URL ?? 'https://sepolia-faucet.pk910.de/'
 
-export const REPO_URL = 'https://github.com/RR2000/oauth2-blockchain'
+export const REPO_URL = 'https://github.com/RR2000/crypto-wallet'
 export const THESIS_URL = 'https://github.com/RR2000/RR2000/blob/main/Rondinella-Raoul-Thesis.pdf'

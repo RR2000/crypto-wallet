@@ -1,4 +1,4 @@
-# oauth2-blockchain
+# crypto-wallet
 
 An OAuth2 / OpenID Connect provider that also keeps your Ethereum wallets: you sign in with an email and a
 password (or with GitHub), like on any website, and your accounts are there on every device. Private keys are
