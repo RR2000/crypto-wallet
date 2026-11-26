@@ -11,9 +11,10 @@ RUN addgroup -S app && adduser -S app -G app && mkdir /data && chown app:app /da
 USER app
 WORKDIR /app
 COPY --from=build /src/target/auth-server-*.jar app.jar
-# database H2 su file nel volume /data, schema gestito da Flyway
+# senza WALLET_DB_URL: database H2 su file in /data (compose.yml in locale ci monta il volume wallet-data),
+# schema gestito da Flyway. Niente VOLUME: in produzione il database e' PostgreSQL (WALLET_DB_URL) e un
+# VOLUME dichiarato creerebbe un volume anonimo vuoto a ogni avvio.
 ENV WALLET_DB_URL=jdbc:h2:file:/data/wallet
-VOLUME /data
 EXPOSE 9000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s CMD wget -qO- http://127.0.0.1:9000/auth/actuator/health || exit 1
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
