@@ -1,7 +1,8 @@
 name: CI
 
 # PR e main: test del server di autenticazione e della web app.
-# main: immagini su GitHub Container Registry (ghcr.io/rr2000/oauth2-blockchain-{auth,web}:sha-<commit> e :main).
+# main: immagini su GitHub Container Registry, :sha-<commit> e :main, con due nomi per la transizione:
+# ghcr.io/rr2000/crypto-wallet-{auth,web} (nuovo, come il repo) e ghcr.io/rr2000/oauth2-blockchain-{auth,web} (vecchio).
 on:
   push:
     branches: [main]
@@ -73,7 +74,9 @@ jobs:
           tags: |
             ghcr.io/rr2000/oauth2-blockchain-${{ matrix.part }}:${{ steps.tag.outputs.tag }}
             ghcr.io/rr2000/oauth2-blockchain-${{ matrix.part }}:main
+            ghcr.io/rr2000/crypto-wallet-${{ matrix.part }}:${{ steps.tag.outputs.tag }}
+            ghcr.io/rr2000/crypto-wallet-${{ matrix.part }}:main
           labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.source=https://github.com/RR2000/crypto-wallet
           cache-from: type=gha,scope=${{ matrix.part }}
           cache-to: type=gha,scope=${{ matrix.part }},mode=max
