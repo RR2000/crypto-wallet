@@ -15,6 +15,15 @@ describe('wallet', () => {
     expect(addressOf(w.keystores[0])).toBe(TEST_ADDRESS)
   })
 
+  it('primo accesso: claim assente, vuoto, rotto o a metà danno un wallet vuoto, mai un errore', () => {
+    const empty = { keystores: [], names: [], inUse: 0 }
+    for (const claim of [undefined, '', 'null', '{}', '[]', '[[]]', '[null,null,null]', 'non json', 42, {}, []]) {
+      expect(parseWallet(claim)).toEqual(empty)
+    }
+    // dopo aver eliminato l'ultimo account
+    expect(parseWallet('[[],[],0]')).toEqual(empty)
+  })
+
   it('ricava gli account standard dalla frase mnemonica', () => {
     expect(fromMnemonic(TEST_PHRASE, 0).address).toBe(TEST_ADDRESS)
     expect(fromMnemonic(`  ${TEST_PHRASE.toUpperCase()} `, 1).address).toBe('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')
